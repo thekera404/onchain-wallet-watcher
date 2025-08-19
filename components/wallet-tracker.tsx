@@ -5,16 +5,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2, ExternalLink, Copy } from "lucide-react"
+import { Plus, Trash2, ExternalLink, Copy, Zap } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface WalletTrackerProps {
   watchedWallets: string[]
   onAddWallet: (address: string) => void
   onRemoveWallet: (address: string) => void
+  notificationToken?: string
+  userId?: string
 }
 
-export function WalletTracker({ watchedWallets, onAddWallet, onRemoveWallet }: WalletTrackerProps) {
+export function WalletTracker({
+  watchedWallets,
+  onAddWallet,
+  onRemoveWallet,
+  notificationToken,
+  userId,
+}: WalletTrackerProps) {
   const [newWallet, setNewWallet] = useState("")
   const [isValidating, setIsValidating] = useState(false)
   const { toast } = useToast()
@@ -37,13 +45,64 @@ export function WalletTracker({ watchedWallets, onAddWallet, onRemoveWallet }: W
       return
     }
 
+    if (notificationToken && userId) {
+      try {
+        const response = await fetch("/api/subscribe-wallet", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: newWallet.trim(),
+            userId,
+            notificationToken,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Failed to subscribe wallet")
+        }
+
+        const data = await response.json()
+        console.log("[v0] Wallet subscribed to real-time monitoring:", data)
+      } catch (error) {
+        console.error("[v0] Error subscribing wallet:", error)
+        toast({
+          title: "Warning",
+          description: "Wallet added but real-time notifications may not work",
+          variant: "destructive",
+        })
+      }
+    }
+
     onAddWallet(newWallet.trim())
     setNewWallet("")
     setIsValidating(false)
 
     toast({
       title: "Wallet Added",
-      description: "Now tracking wallet activity on Base",
+      description: "Now tracking wallet activity on Base with real-time notifications",
+    })
+  }
+
+  const removeWallet = async (address: string) => {
+    if (userId) {
+      try {
+        await fetch("/api/subscribe-wallet", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            walletAddress: address,
+            userId,
+          }),
+        })
+      } catch (error) {
+        console.error("[v0] Error unsubscribing wallet:", error)
+      }
+    }
+
+    onRemoveWallet(address)
+    toast({
+      title: "Wallet Removed",
+      description: "No longer tracking this wallet",
     })
   }
 
@@ -72,7 +131,9 @@ export function WalletTracker({ watchedWallets, onAddWallet, onRemoveWallet }: W
             <Plus className="h-5 w-5" />
             Add Wallet to Watch
           </CardTitle>
-          <CardDescription>Track builders, DAOs, or friends on Base network</CardDescription>
+          <CardDescription>
+            Track builders, DAOs, or friends on Base network with real-time notifications
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <Input
@@ -90,11 +151,14 @@ export function WalletTracker({ watchedWallets, onAddWallet, onRemoveWallet }: W
       {/* Watched Wallets List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Watched Wallets</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            Watched Wallets
+            <Zap className="h-4 w-4 text-yellow-500" />
+          </CardTitle>
           <CardDescription>
             {watchedWallets.length === 0
               ? "No wallets being tracked yet"
-              : `Tracking ${watchedWallets.length} wallet${watchedWallets.length > 1 ? "s" : ""}`}
+              : `Tracking ${watchedWallets.length} wallet${watchedWallets.length > 1 ? "s" : ""} in real-time`}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -112,8 +176,9 @@ export function WalletTracker({ watchedWallets, onAddWallet, onRemoveWallet }: W
                     <Badge variant="secondary" className="text-xs">
                       Base
                     </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      Active
+                    <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      <Zap className="h-3 w-3" />
+                      Real-time
                     </Badge>
                   </div>
                 </div>
@@ -127,7 +192,7 @@ export function WalletTracker({ watchedWallets, onAddWallet, onRemoveWallet }: W
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => onRemoveWallet(wallet)}
+                    onClick={() => removeWallet(wallet)}
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4" />

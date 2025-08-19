@@ -174,36 +174,6 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
           )}
         </CardContent>
       </Card>
-
-      {/* Notification Types */}
-      <Card className="border-0 bg-white/70 backdrop-blur-sm">
-        {" "}
-        {/* Added glassmorphism styling */}
-        <CardHeader>
-          <CardTitle className="text-lg">Alert Types</CardTitle>
-          <CardDescription>What activities trigger notifications</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[
-            { type: "Token Mints", description: "New token minting activity", enabled: true },
-            { type: "Large Transfers", description: "Transfers over $1,000", enabled: true },
-            { type: "DEX Swaps", description: "Token swaps on Base DEXs", enabled: true },
-            { type: "NFT Activity", description: "NFT mints and transfers", enabled: false },
-          ].map((alert) => (
-            <div key={alert.type} className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">{alert.type}</p>
-                <p className="text-xs text-gray-600">{alert.description}</p>
-              </div>
-              <Switch
-                checked={alert.enabled && notificationsEnabled}
-                disabled={!notificationsEnabled}
-                onCheckedChange={() => {}}
-              />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
     </div>
   )
 }
