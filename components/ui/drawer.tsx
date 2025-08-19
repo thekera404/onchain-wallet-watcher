@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
-import { cn } from "@/lib/realtime-monitor"
+import { cn } from "@/lib/utils"
 
 function Drawer({
   ...props

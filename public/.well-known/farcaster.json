@@ -1,18 +1,23 @@
 {
-  "frame": {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjU0NDgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg2MWQwMEFENzYwNjhGOEQ0NzQwYzM1OEM4QzAzYUFFYjUxMGI1OTBEIn0",
+    "payload": "eyJkb21haW4iOiJldGhlcmRyb3BzLXdhdGNoZXIudmVyY2VsLmFwcCJ9",
+    "signature": "MHg3NmRkOWVlMjE4OGEyMjliNzExZjUzOTkxYTc1NmEzMGZjNTA3NmE5OTU5OWJmOWFmYjYyMzAyZWQxMWQ2MWFmNTExYzlhYWVjNjQ3OWMzODcyMTI5MzA2YmJhYjdhMTE0MmRhMjA4MmNjNTM5MTJiY2MyMDRhMWFjZTY2NjE5OTFj"
+  },
+  "miniapp": {
     "version": "1",
-    "name": "Onchain Wallet Watcher",
-    "iconUrl": "https://wallet-watcher.vercel.app/icon.png",
-    "homeUrl": "https://wallet-watcher.vercel.app",
-    "imageUrl": "https://wallet-watcher.vercel.app/og-image.png",
-    "buttonTitle": "Start Watching",
-    "splashImageUrl": "https://wallet-watcher.vercel.app/splash.png",
+    "name": "EtherDROPS Watcher",
+    "iconUrl": "https://etherdrops-watcher.vercel.app/icon.png",
+    "homeUrl": "https://etherdrops-watcher.vercel.app",
+    "imageUrl": "https://etherdrops-watcher.vercel.app/og-image.png",
+    "buttonTitle": "👁️ Start Watching",
+    "splashImageUrl": "https://etherdrops-watcher.vercel.app/splash.png",
     "splashBackgroundColor": "#3B82F6",
-    "webhookUrl": "https://wallet-watcher.vercel.app/api/webhook",
-    "subtitle": "Track Base wallets in real-time",
-    "description": "Monitor specific Base wallets (builders, DAOs, friends) and get notified when they mint or move tokens. Stay updated on onchain activity that matters to you.",
+    "webhookUrl": "https://etherdrops-watcher.vercel.app/api/webhook",
+    "subtitle": "Track Base wallets like EtherDROPS",
+    "description": "Monitor specific Base wallets (builders, DAOs, friends) and get real-time notifications when they mint, transfer, or swap tokens. Stay updated on onchain activity that matters to you.",
     "primaryCategory": "defi",
-    "tags": ["wallet", "tracking", "base", "notifications", "defi", "onchain"],
+    "tags": ["wallet", "tracking", "base", "notifications", "defi", "onchain", "etherdrops"],
     "requiredChains": ["eip155:8453"],
     "requiredCapabilities": ["actions.addMiniApp", "actions.ready"]
   }
