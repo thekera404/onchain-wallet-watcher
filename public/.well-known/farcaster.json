@@ -1,0 +1,19 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "Onchain Wallet Watcher",
+    "iconUrl": "https://wallet-watcher.vercel.app/icon.png",
+    "homeUrl": "https://wallet-watcher.vercel.app",
+    "imageUrl": "https://wallet-watcher.vercel.app/og-image.png",
+    "buttonTitle": "👁️ Start Watching",
+    "splashImageUrl": "https://wallet-watcher.vercel.app/splash.png",
+    "splashBackgroundColor": "#3B82F6",
+    "webhookUrl": "https://wallet-watcher.vercel.app/api/webhook",
+    "subtitle": "Track Base wallets in real-time",
+    "description": "Monitor specific Base wallets (builders, DAOs, friends) and get notified when they mint or move tokens. Stay updated on onchain activity that matters to you.",
+    "primaryCategory": "defi",
+    "tags": ["wallet", "tracking", "base", "notifications", "defi", "onchain"],
+    "requiredChains": ["eip155:8453"],
+    "requiredCapabilities": ["actions.addMiniApp", "actions.ready"]
+  }
+}
