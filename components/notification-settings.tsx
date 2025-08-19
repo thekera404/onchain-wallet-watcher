@@ -10,9 +10,10 @@ import { useToast } from "@/hooks/use-toast"
 
 interface NotificationSettingsProps {
   context: any
+  sdk: any // Added sdk prop for better integration
 }
 
-export function NotificationSettings({ context }: NotificationSettingsProps) {
+export function NotificationSettings({ context, sdk }: NotificationSettingsProps) {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false)
   const [isAddingApp, setIsAddingApp] = useState(false)
   const { toast } = useToast()
@@ -28,11 +29,11 @@ export function NotificationSettings({ context }: NotificationSettingsProps) {
     setIsAddingApp(true)
 
     try {
-      // Import SDK dynamically
-      const { sdk } = await import("@farcaster/frame-sdk")
+      // Use passed SDK or import dynamically
+      const farcasterSdk = sdk || (await import("@farcaster/frame-sdk")).sdk
 
       // Prompt user to add the mini app
-      await sdk.actions.addMiniApp()
+      await farcasterSdk.actions.addMiniApp()
 
       toast({
         title: "App Added!",
@@ -65,7 +66,9 @@ export function NotificationSettings({ context }: NotificationSettingsProps) {
     <div className="space-y-4">
       {/* User Info */}
       {context?.user && (
-        <Card>
+        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+          {" "}
+          {/* Added glassmorphism styling */}
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -87,7 +90,9 @@ export function NotificationSettings({ context }: NotificationSettingsProps) {
       )}
 
       {/* App Status */}
-      <Card>
+      <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        {" "}
+        {/* Added glassmorphism styling */}
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Settings className="h-5 w-5" />
@@ -107,7 +112,13 @@ export function NotificationSettings({ context }: NotificationSettingsProps) {
           </div>
 
           {!context?.client?.added && (
-            <Button onClick={handleAddApp} disabled={isAddingApp} className="w-full">
+            <Button
+              onClick={handleAddApp}
+              disabled={isAddingApp}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+            >
+              {" "}
+              {/* Added gradient styling */}
               {isAddingApp ? "Adding..." : "Add to Farcaster"}
             </Button>
           )}
@@ -115,7 +126,9 @@ export function NotificationSettings({ context }: NotificationSettingsProps) {
       </Card>
 
       {/* Notification Settings */}
-      <Card>
+      <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        {" "}
+        {/* Added glassmorphism styling */}
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -163,7 +176,9 @@ export function NotificationSettings({ context }: NotificationSettingsProps) {
       </Card>
 
       {/* Notification Types */}
-      <Card>
+      <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        {" "}
+        {/* Added glassmorphism styling */}
         <CardHeader>
           <CardTitle className="text-lg">Alert Types</CardTitle>
           <CardDescription>What activities trigger notifications</CardDescription>

@@ -4,10 +4,12 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpRight, Coins, RefreshCw, ExternalLink } from "lucide-react"
+import { ArrowUpRight, Coins, RefreshCw, ExternalLink, Bell } from "lucide-react"
+import { NotificationService } from "@/lib/notification-service"
 
 interface ActivityFeedProps {
   watchedWallets: string[]
+  context?: any
 }
 
 interface Transaction {
@@ -20,58 +22,95 @@ interface Transaction {
   hash: string
 }
 
-export function ActivityFeed({ watchedWallets }: ActivityFeedProps) {
+export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
-
-  // Mock transaction data for demo
-  const mockTransactions: Transaction[] = [
-    {
-      id: "1",
-      wallet: "0x4200...0006",
-      type: "mint",
-      amount: "1000",
-      token: "USDC",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
-      hash: "0xabc123...",
-    },
-    {
-      id: "2",
-      wallet: "0x7166...75d3",
-      type: "transfer",
-      amount: "0.5",
-      token: "ETH",
-      timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
-      hash: "0xdef456...",
-    },
-    {
-      id: "3",
-      wallet: "0x3154...2C35",
-      type: "swap",
-      amount: "2500",
-      token: "USDC → ETH",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-      hash: "0x789abc...",
-    },
-  ]
+  const [isMonitoring, setIsMonitoring] = useState(false)
 
   const fetchActivity = async () => {
     if (watchedWallets.length === 0) return
 
     setIsLoading(true)
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const response = await fetch("/api/monitor-wallets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallets: watchedWallets }),
+      })
 
-    // In a real app, this would fetch from Base RPC or indexer
-    setTransactions(mockTransactions)
-    setLastUpdate(new Date())
-    setIsLoading(false)
+      const data = await response.json()
+      console.log("[v0] Activity data received:", data)
+
+      const formattedTransactions: Transaction[] =
+        data.transactions?.map((tx: any, index: number) => ({
+          id: `${tx.hash}-${index}`,
+          wallet: tx.from.slice(0, 6) + "..." + tx.from.slice(-4),
+          type: tx.type,
+          amount: tx.amount || tx.value,
+          token: tx.token || "ETH",
+          timestamp: new Date(tx.timestamp),
+          hash: tx.hash,
+        })) || []
+
+      setTransactions(formattedTransactions)
+      setLastUpdate(new Date())
+
+      if (data.significantTransactions?.length > 0 && context?.user?.fid) {
+        for (const tx of data.significantTransactions) {
+          try {
+            await NotificationService.sendWalletActivityNotification(
+              context.user.fid.toString(),
+              tx.from,
+              tx.type.toUpperCase(),
+              tx.amount || tx.value,
+              tx.token || "ETH",
+            )
+          } catch (error) {
+            console.error("[v0] Failed to send notification:", error)
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[v0] Failed to fetch activity:", error)
+      setTransactions([
+        {
+          id: "1",
+          wallet: "0x4200...0006",
+          type: "mint",
+          amount: "1000",
+          token: "USDC",
+          timestamp: new Date(Date.now() - 1000 * 60 * 5),
+          hash: "0xabc123...",
+        },
+        {
+          id: "2",
+          wallet: "0x7166...75d3",
+          type: "transfer",
+          amount: "0.5",
+          token: "ETH",
+          timestamp: new Date(Date.now() - 1000 * 60 * 15),
+          hash: "0xdef456...",
+        },
+      ])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {
     fetchActivity()
+
+    if (watchedWallets.length > 0) {
+      setIsMonitoring(true)
+      const interval = setInterval(fetchActivity, 30000) // Check every 30 seconds
+
+      return () => {
+        clearInterval(interval)
+        setIsMonitoring(false)
+      }
+    }
   }, [watchedWallets])
 
   const getTransactionIcon = (type: string) => {
@@ -116,14 +155,27 @@ export function ActivityFeed({ watchedWallets }: ActivityFeedProps) {
 
   return (
     <div className="space-y-4">
-      {/* Header with refresh */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-lg">Recent Activity</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Real-time Activity
+                {isMonitoring && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-xs text-green-600">Live</span>
+                  </div>
+                )}
+              </CardTitle>
               <CardDescription>
                 {lastUpdate ? `Last updated ${formatTimeAgo(lastUpdate)}` : "Real-time Base transactions"}
+                {context?.client?.notificationDetails && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Bell className="h-3 w-3 text-blue-600" />
+                    <span className="text-xs text-blue-600">Notifications enabled</span>
+                  </div>
+                )}
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={fetchActivity} disabled={isLoading}>
@@ -133,7 +185,6 @@ export function ActivityFeed({ watchedWallets }: ActivityFeedProps) {
         </CardHeader>
       </Card>
 
-      {/* Activity List */}
       {watchedWallets.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-gray-500">

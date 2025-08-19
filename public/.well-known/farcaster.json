@@ -5,7 +5,7 @@
     "iconUrl": "https://wallet-watcher.vercel.app/icon.png",
     "homeUrl": "https://wallet-watcher.vercel.app",
     "imageUrl": "https://wallet-watcher.vercel.app/og-image.png",
-    "buttonTitle": "👁️ Start Watching",
+    "buttonTitle": "Start Watching",
     "splashImageUrl": "https://wallet-watcher.vercel.app/splash.png",
     "splashBackgroundColor": "#3B82F6",
     "webhookUrl": "https://wallet-watcher.vercel.app/api/webhook",
