@@ -27,18 +27,7 @@ import {
 import { useAppStore } from '@/lib/store'
 import { loadDemoData, clearDemoData } from '@/lib/demo-data'
 
-// Declare Farcaster global object
-declare global {
-  interface Window {
-    farcaster?: {
-      getContext(): Promise<FarcasterContext>
-      on(event: string, callback: (data: any) => void): void
-      ready(): Promise<void>
-      addMiniApp(): Promise<void>
-      sendAction(action: FarcasterAction): Promise<void>
-    }
-  }
-}
+// Farcaster Mini App types
 
 // Traditional Farcaster Mini App types
 interface FarcasterUser {
@@ -99,31 +88,38 @@ export default function HomePage() {
         return
       }
 
-      // Traditional Farcaster Mini App initialization
-      if (typeof window !== 'undefined' && window.farcaster) {
-        const farcaster = window.farcaster
+      // Use official Farcaster Mini App SDK
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk')
         
         // Get initial context
-        const context = await farcaster.getContext()
-        setFarcasterContext(context)
+        const context = await sdk.context
+        setFarcasterContext({
+          user: context.user,
+          client: { added: context.client.added, verified: context.client.verified }
+        })
         
         // Listen for context changes
-        farcaster.on('context', (newContext: FarcasterContext) => {
-          setFarcasterContext(newContext)
+        sdk.on('context', (newContext: any) => {
+          setFarcasterContext({
+            user: newContext.user,
+            client: { added: newContext.client.added, verified: newContext.client.verified }
+          })
         })
 
         // Listen for actions
-        farcaster.on('action', (action: FarcasterAction) => {
+        sdk.on('action', (action: FarcasterAction) => {
           handleFarcasterAction(action)
         })
 
-        // Signal ready
-        await farcaster.ready()
+        // IMPORTANT: Call ready() to hide splash screen
+        await sdk.actions.ready()
         
-        console.log("[v0] Traditional Farcaster Mini App initialized", context)
-      } else {
+        console.log("[v0] Farcaster Mini App SDK initialized", context)
+      } catch (sdkError) {
+        console.warn("SDK not available, using fallback:", sdkError)
         // Fallback for non-Farcaster environments
-        console.log("[v0] Farcaster not available, using fallback")
+        console.log("[v0] Farcaster SDK not available, using fallback")
       }
     } catch (error) {
       console.error("Failed to initialize Farcaster Mini App:", error)
@@ -180,22 +176,23 @@ export default function HomePage() {
       addedAt: new Date().toISOString(),
       filters: {
         minValue: '0.01',
-        includeMints: true,
-        includeTransfers: true,
-        includeSwaps: true
+        trackNFTs: true,
+        trackTokens: true,
+        trackDeFi: true,
+        notifyOnMint: true,
+        notifyOnTransfer: true
       }
     })
 
     // Send Farcaster action if available
-    if (window.farcaster) {
-      try {
-        await window.farcaster.sendAction({
-          type: 'WALLET_ADDED',
-          payload: { address }
-        })
-      } catch (error) {
-        console.warn('Failed to send Farcaster action:', error)
-      }
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk')
+      await sdk.actions.sendAction({
+        type: 'WALLET_ADDED',
+        payload: { address }
+      })
+    } catch (error) {
+      console.warn('Failed to send Farcaster action:', error)
     }
 
     setActionResult(`Wallet ${address} added successfully!`)
@@ -207,15 +204,14 @@ export default function HomePage() {
     removeWatchedWallet(address)
     
     // Send Farcaster action if available
-    if (window.farcaster) {
-      try {
-        await window.farcaster.sendAction({
-          type: 'WALLET_REMOVED',
-          payload: { address }
-        })
-      } catch (error) {
-        console.warn('Failed to send Farcaster action:', error)
-      }
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk')
+      await sdk.actions.sendAction({
+        type: 'WALLET_REMOVED',
+        payload: { address }
+      })
+    } catch (error) {
+      console.warn('Failed to send Farcaster action:', error)
     }
 
     setActionResult(`Wallet ${address} removed successfully!`)
@@ -223,18 +219,17 @@ export default function HomePage() {
   }
 
   const promptAddApp = async () => {
-    if (window.farcaster) {
-      try {
-        setIsActionLoading(true)
-        await window.farcaster.addMiniApp()
-        setActionResult('Mini App added to Farcaster successfully!')
-      } catch (error) {
-        console.error('Failed to add mini app:', error)
-        setActionResult('Failed to add Mini App to Farcaster')
-      } finally {
-        setIsActionLoading(false)
-        setTimeout(() => setActionResult(null), 3000)
-      }
+    try {
+      setIsActionLoading(true)
+      const { sdk } = await import('@farcaster/miniapp-sdk')
+      await sdk.actions.addMiniApp()
+      setActionResult('Mini App added to Farcaster successfully!')
+    } catch (error) {
+      console.error('Failed to add mini app:', error)
+      setActionResult('Failed to add Mini App to Farcaster')
+    } finally {
+      setIsActionLoading(false)
+      setTimeout(() => setActionResult(null), 3000)
     }
   }
 
