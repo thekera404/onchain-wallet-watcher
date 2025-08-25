@@ -1,51 +1,60 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { ethers } from "ethers"
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const address = searchParams.get("address")
+    const { address } = await request.json()
 
     if (!address) {
-      return NextResponse.json({ valid: false, error: "No address provided" })
+      return NextResponse.json({ error: "Address is required" }, { status: 400 })
     }
 
-    // Validate address format
-    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-      return NextResponse.json({ valid: false, error: "Invalid address format" })
-    }
-
-    // Check if wallet has activity on Base network
-    try {
-      const response = await fetch(`${process.env.BASE_RPC_URL}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_getBalance",
-          params: [address, "latest"],
-          id: 1,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.error) {
-        return NextResponse.json({ valid: false, error: "RPC error" })
-      }
-
-      // Consider wallet valid if it has any balance or if RPC call succeeds
+    // Basic Ethereum address validation
+    if (!ethers.isAddress(address)) {
       return NextResponse.json({
-        valid: true,
-        balance: data.result,
-        network: "Base",
+        isValid: false,
+        error: "Invalid Ethereum address format"
       })
-    } catch (rpcError) {
-      console.error("RPC validation error:", rpcError)
-      // Return valid anyway for demo purposes
-      return NextResponse.json({ valid: true, network: "Base" })
     }
+
+    // Check if address exists on Base network
+    try {
+      const baseRpcUrl = process.env.BASE_RPC_URL || "https://mainnet.base.org"
+      const provider = new ethers.JsonRpcProvider(baseRpcUrl)
+
+      // Get the balance and transaction count
+      const [balance, transactionCount] = await Promise.all([
+        provider.getBalance(address),
+        provider.getTransactionCount(address)
+      ])
+
+      // Consider wallet valid if it has any balance or has made transactions
+      const isValid = balance > 0n || transactionCount > 0
+
+      return NextResponse.json({
+        isValid,
+        address: ethers.getAddress(address), // Normalized address
+        balance: ethers.formatEther(balance),
+        transactionCount: transactionCount.toString(),
+        network: "Base"
+      })
+
+    } catch (error) {
+      console.error("[ValidateWallet] Error checking wallet on Base:", error)
+      
+      // If we can't check on Base, still validate the address format
+      return NextResponse.json({
+        isValid: true, // Assume valid if we can't check
+        address: ethers.getAddress(address),
+        error: "Could not verify wallet activity on Base network",
+        network: "Base"
+      })
+    }
+
   } catch (error) {
-    console.error("Validation error:", error)
-    return NextResponse.json({ valid: false, error: "Validation failed" })
+    console.error("[ValidateWallet] Error:", error)
+    return NextResponse.json({ 
+      error: "Failed to validate wallet" 
+    }, { status: 500 })
   }
 }

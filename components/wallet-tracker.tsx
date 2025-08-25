@@ -5,37 +5,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2, ExternalLink, Copy, Zap } from "lucide-react"
+import { Plus, Trash2, ExternalLink, Copy, Zap, CheckCircle, AlertCircle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface WalletTrackerProps {
   watchedWallets: string[]
   onAddWallet: (address: string) => void
   onRemoveWallet: (address: string) => void
-  notificationToken?: string
-  userId?: string
+  context?: any
 }
 
 export function WalletTracker({
   watchedWallets,
   onAddWallet,
   onRemoveWallet,
-  notificationToken,
-  userId,
+  context,
 }: WalletTrackerProps) {
   const [newWallet, setNewWallet] = useState("")
   const [isValidating, setIsValidating] = useState(false)
+  const [validationStatus, setValidationStatus] = useState<"idle" | "validating" | "valid" | "invalid">("idle")
   const { toast } = useToast()
 
   const validateAndAddWallet = async () => {
     if (!newWallet.trim()) return
 
     setIsValidating(true)
+    setValidationStatus("validating")
 
     // Basic Ethereum address validation
     const isValidAddress = /^0x[a-fA-F0-9]{40}$/.test(newWallet.trim())
 
     if (!isValidAddress) {
+      setValidationStatus("invalid")
       toast({
         title: "Invalid Address",
         description: "Please enter a valid Ethereum address",
@@ -45,57 +46,97 @@ export function WalletTracker({
       return
     }
 
-    if (notificationToken && userId) {
-      try {
-        const response = await fetch("/api/subscribe-wallet", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            walletAddress: newWallet.trim(),
-            userId,
-            notificationToken,
-          }),
-        })
+    // Validate wallet on Base network
+    try {
+      const response = await fetch("/api/validate-wallet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: newWallet.trim(),
+        }),
+      })
 
-        if (!response.ok) {
-          throw new Error("Failed to subscribe wallet")
-        }
+      const validationResult = await response.json()
 
-        const data = await response.json()
-        console.log("[v0] Wallet subscribed to real-time monitoring:", data)
-      } catch (error) {
-        console.error("[v0] Error subscribing wallet:", error)
+      if (!validationResult.isValid) {
+        setValidationStatus("invalid")
         toast({
-          title: "Warning",
-          description: "Wallet added but real-time notifications may not work",
+          title: "Invalid Wallet",
+          description: validationResult.error || "This wallet doesn't exist on Base network",
           variant: "destructive",
         })
+        setIsValidating(false)
+        return
       }
+
+      setValidationStatus("valid")
+
+      // Add wallet to monitoring system
+      if (context?.user?.fid) {
+        try {
+          const monitorResponse = await fetch("/api/monitor-wallets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "add",
+              address: newWallet.trim(),
+              userId: context.user.fid,
+              fid: context.user.fid,
+            }),
+          })
+
+          if (!monitorResponse.ok) {
+            throw new Error("Failed to add wallet to monitoring")
+          }
+
+          const monitorData = await monitorResponse.json()
+          console.log("[WalletTracker] Wallet added to monitoring:", monitorData)
+        } catch (error) {
+          console.error("[WalletTracker] Error adding wallet to monitoring:", error)
+          toast({
+            title: "Warning",
+            description: "Wallet added but monitoring may not be active",
+            variant: "destructive",
+          })
+        }
+      }
+
+      onAddWallet(newWallet.trim())
+      setNewWallet("")
+      setValidationStatus("idle")
+
+      toast({
+        title: "Wallet Added Successfully",
+        description: "Now tracking wallet activity on Base with real-time notifications",
+      })
+
+    } catch (error) {
+      console.error("[WalletTracker] Error validating wallet:", error)
+      setValidationStatus("invalid")
+      toast({
+        title: "Validation Error",
+        description: "Failed to validate wallet. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsValidating(false)
     }
-
-    onAddWallet(newWallet.trim())
-    setNewWallet("")
-    setIsValidating(false)
-
-    toast({
-      title: "Wallet Added",
-      description: "Now tracking wallet activity on Base with real-time notifications",
-    })
   }
 
   const removeWallet = async (address: string) => {
-    if (userId) {
+    if (context?.user?.fid) {
       try {
-        await fetch("/api/subscribe-wallet", {
-          method: "DELETE",
+        await fetch("/api/monitor-wallets", {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            walletAddress: address,
-            userId,
+            action: "remove",
+            address: address,
+            userId: context.user.fid,
           }),
         })
       } catch (error) {
-        console.error("[v0] Error unsubscribing wallet:", error)
+        console.error("[WalletTracker] Error removing wallet from monitoring:", error)
       }
     }
 
@@ -122,6 +163,19 @@ export function WalletTracker({
     return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
+  const getValidationIcon = () => {
+    switch (validationStatus) {
+      case "validating":
+        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+      case "valid":
+        return <CheckCircle className="h-4 w-4 text-green-600" />
+      case "invalid":
+        return <AlertCircle className="h-4 w-4 text-red-600" />
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Add Wallet Form */}
@@ -136,13 +190,27 @@ export function WalletTracker({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Input
-            placeholder="0x... (Ethereum address)"
-            value={newWallet}
-            onChange={(e) => setNewWallet(e.target.value)}
-            className="font-mono text-sm"
-          />
-          <Button onClick={validateAndAddWallet} disabled={!newWallet.trim() || isValidating} className="w-full">
+          <div className="relative">
+            <Input
+              placeholder="0x... (Ethereum address)"
+              value={newWallet}
+              onChange={(e) => {
+                setNewWallet(e.target.value)
+                setValidationStatus("idle")
+              }}
+              className="font-mono text-sm pr-10"
+            />
+            {validationStatus !== "idle" && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                {getValidationIcon()}
+              </div>
+            )}
+          </div>
+          <Button 
+            onClick={validateAndAddWallet} 
+            disabled={!newWallet.trim() || isValidating} 
+            className="w-full"
+          >
             {isValidating ? "Validating..." : "Add Wallet"}
           </Button>
         </CardContent>
@@ -180,6 +248,9 @@ export function WalletTracker({
                       <Zap className="h-3 w-3" />
                       Real-time
                     </Badge>
+                    <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                      Active
+                    </Badge>
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -215,6 +286,8 @@ export function WalletTracker({
             { name: "Base Team", address: "0x4200000000000000000000000000000000000006" },
             { name: "Coinbase", address: "0x71660c4005BA85c37ccec55d0C4493E66Fe775d3" },
             { name: "Base Bridge", address: "0x3154Cf16ccdb4C6d922629664174b904d80F2C35" },
+            { name: "DEGEN Token", address: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed" },
+            { name: "HIGHER Token", address: "0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe" },
           ].map((wallet) => (
             <div key={wallet.address} className="flex items-center justify-between p-2 border rounded-lg">
               <div>

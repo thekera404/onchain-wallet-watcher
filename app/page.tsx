@@ -188,7 +188,7 @@ export default function EtherDropsApp() {
           </TabsList>
 
           <TabsContent value="wallets" className="space-y-4">
-            <WalletTracker watchedWallets={watchedWallets} onAddWallet={addWallet} onRemoveWallet={removeWallet} />
+            <WalletTracker watchedWallets={watchedWallets} onAddWallet={addWallet} onRemoveWallet={removeWallet} context={context} />
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-4">
