@@ -12,7 +12,7 @@
     "imageUrl": "https://onchain-wallet-watcher.vercel.app/og-image.png",
     "buttonTitle": "Start Watching",
     "splashImageUrl": "https://onchain-wallet-watcher.vercel.app/splash.png",
-    "splashBackgroundColor": "#3B82F6",
+    "splashBackgroundColor": "#0a0b2b",
     "webhookUrl": "https://onchain-wallet-watcher.vercel.app/api/webhook",
     "description": "Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.",
     "tags": ["wallet", "tracking", "base", "onchain"],

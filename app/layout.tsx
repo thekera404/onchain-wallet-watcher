@@ -6,19 +6,19 @@ import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Onchain Wallet Watcher | Track Base Wallets",
+  title: "Onchain Wallet Watcher",
   description:
-    "Monitor specific Base wallets and get notified when they mint or move tokens. Track builders, DAOs, and friends onchain activity.",
+    "Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.",
   openGraph: {
     title: "Onchain Wallet Watcher",
-    description: "Track Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
-    images: ["/og-image.png"],
+    description: "Track your favorite Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
+    images: ["https://onchain-wallet-watcher.vercel.app/og-image.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Onchain Wallet Watcher",
     description: "Track Base wallets in real-time",
-    images: ["/og-image.png"],
+    images: ["https://onchain-wallet-watcher.vercel.app/og-image.png"],
   },
 }
 
@@ -33,7 +33,7 @@ export default function RootLayout({
         {/* Farcaster Mini App Meta Tags */}
         <meta
           name="fc:frame"
-          content='{"version":"1","imageUrl":"https://onchain-wallet-watcher.vercel.app/splash.png","splashBackgroundColor":"#3B82F6"}}}'
+          content='{"version":"1","imageUrl":"https://onchain-wallet-watcher.vercel.app/splash.png","splashBackgroundColor":"#0a0b2b"}}}'
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <style>{`
