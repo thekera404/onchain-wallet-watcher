@@ -40,13 +40,17 @@ export default function EtherDropsApp() {
         const { sdk: farcasterSdk } = await import("@farcaster/frame-sdk")
         setSdk(farcasterSdk)
 
+        // Always call ready() to dismiss splash screen, even if context fails
+        try {
+          await farcasterSdk.actions.ready()
+        } catch (readyError) {
+          console.warn("Failed to call ready(), but continuing:", readyError)
+        }
+
         // Get context information
         const frameContext = farcasterSdk.context
         setContext(frameContext)
         setIsConnected(true)
-
-        // Signal that the app is ready
-        await farcasterSdk.actions.ready()
         setIsReady(true)
 
         console.log("[v0] Farcaster SDK initialized", frameContext)
@@ -59,8 +63,18 @@ export default function EtherDropsApp() {
     }
 
     // Add timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(async () => {
       console.log("[v0] Farcaster SDK initialization timeout, proceeding with fallback")
+      
+      // Try to call ready() even on timeout to dismiss splash screen
+      if (sdk) {
+        try {
+          await sdk.actions.ready()
+        } catch (readyError) {
+          console.warn("Failed to call ready() on timeout:", readyError)
+        }
+      }
+      
       setIsReady(true)
       setIsConnected(false)
     }, 5000) // 5 second timeout
