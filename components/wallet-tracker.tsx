@@ -200,7 +200,10 @@ export function WalletTracker({
             Add Wallet to Watch
           </CardTitle>
           <CardDescription>
-            Track builders, DAOs, or friends on Base network with real-time notifications
+            {context?.user 
+              ? `Track builders, DAOs, or friends on Base network with real-time notifications, ${context.user.username || 'friend'}`
+              : "Track builders, DAOs, or friends on Base network with real-time notifications"
+            }
             {watchedWallets.length > 0 && (
               <span className="block mt-1 text-xs text-muted-foreground">
                 {watchedWallets.length}/3 wallets being tracked
@@ -339,7 +342,12 @@ export function WalletTracker({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Popular Base Builders</CardTitle>
-          <CardDescription>Quick add popular wallets to track</CardDescription>
+          <CardDescription>
+            {context?.user 
+              ? `Quick add popular wallets to track, ${context.user.username || 'friend'}`
+              : "Quick add popular wallets to track"
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {[

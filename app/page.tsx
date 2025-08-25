@@ -116,6 +116,25 @@ export default function EtherDropsApp() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* User Profile Display */}
+              {context?.user && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-card/50 rounded-lg border border-border/50">
+                  <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-bold text-white">
+                      {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-medium text-card-foreground">
+                      {context.user.username || `FID: ${context.user.fid}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {watchedWallets.length}/3 wallets
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               <Button
                 variant="ghost"
                 size="sm"
@@ -145,16 +164,32 @@ export default function EtherDropsApp() {
         {watchedWallets.length === 0 && (
           <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-card-foreground">Welcome to Onchain Wallet Watcher!</CardTitle>
+              <CardTitle className="text-lg text-card-foreground">
+                {context?.user ? (
+                  <>
+                    Welcome, {context.user.username || `FID: ${context.user.fid}`}! 👋
+                  </>
+                ) : (
+                  "Welcome to Onchain Wallet Watcher!"
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-3">
-                Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.
+                {context?.user 
+                  ? `Ready to start tracking Base wallets, ${context.user.username || 'friend'}? Add wallets to watch and get notified when they mint, swap, or transfer tokens.`
+                  : "Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens."
+                }
               </p>
               <div className="text-xs text-muted-foreground/70">
                 • Add wallets to watch
                 <br />• Get real-time notifications
                 <br />• Track high-value transactions
+                {context?.user && (
+                  <>
+                    <br />• Your Farcaster ID: {context.user.fid}
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -196,6 +231,45 @@ export default function EtherDropsApp() {
             </CardContent>
           </Card>
         </div>
+
+        {/* User Profile Stats */}
+        {context?.user && (
+          <Card className="border-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 backdrop-blur-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base text-card-foreground flex items-center gap-2">
+                <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-xs font-bold text-white">
+                    {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </div>
+                Your Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-3 bg-card/50 rounded-lg border border-border/30">
+                  <p className="text-xs text-muted-foreground">Farcaster ID</p>
+                  <p className="text-sm font-mono font-medium text-card-foreground">{context.user.fid}</p>
+                </div>
+                <div className="text-center p-3 bg-card/50 rounded-lg border border-border/30">
+                  <p className="text-xs text-muted-foreground">Username</p>
+                  <p className="text-sm font-medium text-card-foreground">
+                    {context.user.username || 'Not set'}
+                  </p>
+                </div>
+              </div>
+              <div className="text-center p-3 bg-card/50 rounded-lg border border-border/30">
+                <p className="text-xs text-muted-foreground">App Status</p>
+                <div className="flex items-center justify-center gap-2 mt-1">
+                  <div className={`w-2 h-2 rounded-full ${context?.client?.added ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                  <p className="text-sm font-medium text-card-foreground">
+                    {context?.client?.added ? 'Added to Farcaster' : 'Not added yet'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="wallets" className="w-full">
