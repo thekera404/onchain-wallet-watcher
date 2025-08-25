@@ -127,14 +127,29 @@ export default function EtherDropsApp() {
               {context?.user && (
                 <>
                   {/* Desktop Profile */}
-                  <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-card/50 rounded-lg border border-border/50">
-                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs font-bold text-white">
+                  <div className="hidden sm:flex items-center gap-3 px-4 py-2 bg-card/50 rounded-lg border border-border/50 hover:bg-card/70 transition-colors">
+                    {/* Avatar - Show actual Farcaster avatar if available, otherwise fallback to initial */}
+                    {context.user.pfp ? (
+                      <img 
+                        src={context.user.pfp} 
+                        alt={`${context.user.username || 'User'}'s avatar`}
+                        className="w-8 h-8 rounded-full object-cover border-2 border-border/50"
+                        onError={(e) => {
+                          // Fallback to initial if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center ${context.user.pfp ? 'hidden' : ''}`}>
+                      <span className="text-sm font-bold text-white">
                         {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
                       </span>
                     </div>
+                    
                     <div className="text-right">
-                      <p className="text-xs font-medium text-card-foreground">
+                      <p className="text-sm font-medium text-card-foreground">
                         {context.user.username || `FID: ${context.user.fid}`}
                       </p>
                       <p className="text-xs text-muted-foreground">
@@ -144,12 +159,27 @@ export default function EtherDropsApp() {
                   </div>
                   
                   {/* Mobile Profile */}
-                  <div className="sm:hidden flex items-center gap-2 px-2 py-1 bg-card/50 rounded-lg border border-border/50">
-                    <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <div className="sm:hidden flex items-center gap-2 px-3 py-2 bg-card/50 rounded-lg border border-border/50 hover:bg-card/70 transition-colors">
+                    {/* Avatar - Show actual Farcaster avatar if available, otherwise fallback to initial */}
+                    {context.user.pfp ? (
+                      <img 
+                        src={context.user.pfp} 
+                        alt={`${context.user.username || 'User'}'s avatar`}
+                        className="w-6 h-6 rounded-full object-cover border border-border/50"
+                        onError={(e) => {
+                          // Fallback to initial if image fails to load
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center ${context.user.pfp ? 'hidden' : ''}`}>
                       <span className="text-xs font-bold text-white">
                         {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
                       </span>
                     </div>
+                    
                     <div className="text-right">
                       <p className="text-xs font-medium text-card-foreground">
                         {watchedWallets.length}/3
@@ -276,9 +306,23 @@ export default function EtherDropsApp() {
         {context?.user && (
           <Card className="border-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base text-card-foreground flex items-center gap-2">
-                <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">
+              <CardTitle className="text-base text-card-foreground flex items-center gap-3">
+                {/* Avatar - Show actual Farcaster avatar if available, otherwise fallback to initial */}
+                {context.user.pfp ? (
+                  <img 
+                    src={context.user.pfp} 
+                    alt={`${context.user.username || 'User'}'s avatar`}
+                    className="w-8 h-8 rounded-full object-cover border-2 border-border/50"
+                    onError={(e) => {
+                      // Fallback to initial if image fails to load
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center ${context.user.pfp ? 'hidden' : ''}`}>
+                  <span className="text-sm font-bold text-white">
                     {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
