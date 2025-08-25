@@ -14,10 +14,8 @@
     "splashImageUrl": "https://onchain-wallet-watcher.vercel.app/splash.png",
     "splashBackgroundColor": "#3B82F6",
     "webhookUrl": "https://onchain-wallet-watcher.vercel.app/api/webhook",
-    "subtitle": "Track Base wallets like EtherDROPS",
-    "description": "Monitor specific Base wallets (builders, DAOs, friends) and get real-time notifications when they mint, transfer, or swap tokens. Stay updated on onchain activity that matters to you.",
-    "primaryCategory": "defi",
-    "tags": ["wallet", "tracking", "base", "notifications", "defi", "onchain", "etherdrops"],
+    "description": "Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.",
+    "tags": ["wallet", "tracking", "base", "onchain"],
     "requiredChains": ["eip155:8453"],
     "requiredCapabilities": ["actions.addMiniApp", "actions.ready"]
   }
