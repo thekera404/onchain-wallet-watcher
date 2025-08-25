@@ -61,6 +61,8 @@ NEYNAR_API_KEY=your_neynar_api_key_here
 2. Create an account and get an API key
 3. Add to `BASESCAN_API_KEY`
 
+**Important**: The app now uses the official [Etherscan V2 API](https://docs.etherscan.io/etherscan-v2) which unifies EVM data across 50+ chains with a single API key. This eliminates the need for multiple API keys and provides future-proof access to Base and other supported chains.
+
 #### Farcaster
 1. Register your mini app with Farcaster
 2. Get your app key and Neynar API key
@@ -78,6 +80,23 @@ The app will be available at `http://localhost:3000`
 
 ## How It Works
 
+### Etherscan V2 API Integration
+
+The app leverages the [Etherscan V2 API](https://docs.etherscan.io/etherscan-v2) which provides:
+
+- **Single API Key**: Access to 50+ chains with one key
+- **Unified Interface**: Consistent API across all supported chains
+- **Future-Proof**: No need to manage multiple API endpoints
+- **Chain ID Support**: Use `chainid` parameter to specify target chain
+
+**Supported Chains Include:**
+- Base (8453) - Primary focus
+- Arbitrum (42161)
+- Optimism (10)
+- Polygon (137)
+- BSC (56)
+- And 45+ more chains
+
 ### Blockchain Monitoring
 
 The app uses a sophisticated monitoring system that:
@@ -87,6 +106,8 @@ The app uses a sophisticated monitoring system that:
 3. **Analyzes Transactions**: Determines transaction types (mint, transfer, swap, contract interaction)
 4. **Extracts Token Data**: Gets token symbols, amounts, and calculates USD values
 5. **Filters Significant Activity**: Only notifies for transactions > $100 or mints
+6. **API Rate Limiting**: Respects Etherscan V2 API rate limits (5 calls/second for free tier)
+7. **Multichain Support**: Single API key supports 50+ chains including Base, Arbitrum, Optimism, Polygon, and more
 
 ### Transaction Types Detected
 
@@ -118,6 +139,11 @@ The app uses a sophisticated monitoring system that:
 ### `/api/webhook`
 - `POST`: Handle Farcaster webhook events
 - Events: `miniapp_added`, `notifications_enabled`, `notifications_disabled`
+
+### `/api/v2-multichain`
+- `GET`: Query single chain using Etherscan V2 API
+- `POST`: Query multiple chains with single API key
+- Parameters: `address`, `chainid`, `action`
 
 ## Deployment
 

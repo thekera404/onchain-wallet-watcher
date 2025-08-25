@@ -50,6 +50,9 @@ class BlockchainMonitor {
   private isConnected = false
   private reconnectAttempts = 0
   private maxReconnectAttempts = 5
+  private apiCallCount = 0
+  private lastApiCallTime = 0
+  private readonly API_RATE_LIMIT = 5 // calls per second for free tier
 
   constructor() {
     this.initializeProviders()
@@ -374,6 +377,151 @@ class BlockchainMonitor {
     }
   }
 
+  // Rate limiting for API calls
+  private async checkRateLimit(): Promise<boolean> {
+    const now = Date.now()
+    
+    // Reset counter if more than 1 second has passed
+    if (now - this.lastApiCallTime > 1000) {
+      this.apiCallCount = 0
+      this.lastApiCallTime = now
+    }
+
+    // Check if we're within rate limit
+    if (this.apiCallCount >= this.API_RATE_LIMIT) {
+      console.log('[BlockchainMonitor] Rate limit reached, waiting...')
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      return this.checkRateLimit()
+    }
+
+    this.apiCallCount++
+    return true
+  }
+
+  // Enhanced transaction fetching with multiple data sources
+  public async getTransactionHistory(address: string, fromBlock: number, toBlock: number): Promise<TransactionData[]> {
+    await this.checkRateLimit()
+    
+    const transactions: TransactionData[] = []
+    
+    try {
+      // Primary: Use RPC logs (most reliable, no API limits)
+      const logs = await this.provider!.getLogs({
+        fromBlock,
+        toBlock,
+        address: address
+      })
+
+      for (const log of logs) {
+        const tx = await this.provider!.getTransaction(log.transactionHash)
+        if (tx) {
+          const receipt = await tx.wait()
+          const txData = await this.analyzeTransaction(tx, receipt)
+          if (txData) {
+            transactions.push(txData)
+          }
+        }
+      }
+
+      // Secondary: Use BaseScan API if available (for additional metadata)
+      if (process.env.BASESCAN_API_KEY && transactions.length === 0) {
+        const baseScanTxs = await this.getBaseScanTransactions(address, fromBlock, toBlock)
+        transactions.push(...baseScanTxs)
+      }
+
+    } catch (error) {
+      console.error(`[BlockchainMonitor] Error fetching transaction history for ${address}:`, error)
+    }
+
+    return transactions
+  }
+
+  // BaseScan API integration with V2 API support
+  private async getBaseScanTransactions(address: string, fromBlock: number, toBlock: number): Promise<TransactionData[]> {
+    try {
+      const apiKey = process.env.BASESCAN_API_KEY
+      if (!apiKey) return []
+
+      // Use Etherscan V2 API with chainid parameter for Base (chain ID 8453)
+      const v2Url = 'https://api.etherscan.io/v2/api'
+      const v2Params = new URLSearchParams({
+        chainid: '8453', // Base chain ID
+        module: 'account',
+        action: 'txlist',
+        address: address,
+        startblock: fromBlock.toString(),
+        endblock: toBlock.toString(),
+        sort: 'desc',
+        apikey: apiKey
+      })
+
+      console.log('[BlockchainMonitor] Using Etherscan V2 API for Base chain')
+      const response = await fetch(`${v2Url}?${v2Params}`)
+      
+      // If V2 fails, fallback to V1 BaseScan API
+      if (!response.ok) {
+        console.log('[BlockchainMonitor] V2 API failed, trying V1 BaseScan...')
+        const v1Url = `https://api.basescan.org/api`
+        const v1Params = new URLSearchParams({
+          module: 'account',
+          action: 'txlist',
+          address: address,
+          startblock: fromBlock.toString(),
+          endblock: toBlock.toString(),
+          sort: 'desc',
+          apikey: apiKey
+        })
+        
+        const v1Response = await fetch(`${v1Url}?${v1Params}`)
+        
+        if (!v1Response.ok) {
+          throw new Error(`BaseScan API error: ${v1Response.status}`)
+        }
+        
+        const data = await v1Response.json()
+        return this.parseTransactionData(data)
+      }
+
+      const data = await response.json()
+      return this.parseTransactionData(data)
+
+    } catch (error) {
+      console.error('[BlockchainMonitor] BaseScan API error:', error)
+      return []
+    }
+  }
+
+  private parseTransactionData(data: any): TransactionData[] {
+    if (data.status === '1' && data.result) {
+      return data.result.slice(0, 10).map((tx: any) => ({
+        hash: tx.hash,
+        from: tx.from,
+        to: tx.to,
+        value: (Number.parseInt(tx.value) / 1e18).toFixed(6),
+        blockNumber: Number.parseInt(tx.blockNumber),
+        timestamp: Number.parseInt(tx.timeStamp) * 1000,
+        type: this.determineTransactionTypeFromData(tx),
+        token: 'ETH',
+        amount: (Number.parseInt(tx.value) / 1e18).toFixed(6),
+        usdValue: Math.round((Number.parseInt(tx.value) / 1e18) * 2500),
+        gasUsed: tx.gasUsed,
+        gasPrice: tx.gasPrice,
+        input: tx.input,
+      }))
+    }
+    return []
+  }
+
+  private determineTransactionTypeFromData(tx: any): 'transfer' | 'mint' | 'swap' | 'contract_interaction' {
+    if (tx.input && tx.input !== '0x') {
+      if (tx.input.includes('a9059cbb')) return 'transfer'
+      if (tx.input.includes('40c10f19')) return 'mint'
+      if (tx.input.includes('38ed1739') || tx.input.includes('7ff36ab5')) return 'swap'
+      return 'contract_interaction'
+    }
+    return 'transfer'
+  }
+
   public addWalletSubscription(address: string, userId: string, fid: string, notificationToken: string) {
     const normalizedAddress = address.toLowerCase()
 
@@ -423,6 +571,13 @@ class BlockchainMonitor {
 
   public isMonitoring(address: string): boolean {
     return this.subscriptions.has(address.toLowerCase())
+  }
+
+  public async getLatestBlockNumber(): Promise<number> {
+    if (!this.provider) {
+      throw new Error('Provider not initialized')
+    }
+    return await this.provider.getBlockNumber()
   }
 
   private async startMonitoring() {

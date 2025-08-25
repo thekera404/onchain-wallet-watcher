@@ -91,81 +91,16 @@ async function getRealTimeTransactions(wallets: string[]) {
 
 async function getBaseTransactions(wallet: string) {
   try {
-    const baseRpcUrl = process.env.BASE_RPC_URL || "https://mainnet.base.org"
-    
-    // Get latest block number
-    const latestBlockResponse = await fetch(baseRpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_blockNumber",
-        params: [],
-        id: 1,
-      }),
-    })
-
-    const latestBlockData = await latestBlockResponse.json()
-    const latestBlock = Number.parseInt(latestBlockData.result, 16)
-
-    // Get last 50 blocks to check for recent transactions
+    // Use the enhanced blockchain monitor for transaction fetching
+    const latestBlock = await blockchainMonitor.getLatestBlockNumber()
     const fromBlock = Math.max(0, latestBlock - 50)
-
-    // Get transaction history for the wallet
-    const txHistoryResponse = await fetch(baseRpcUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "eth_getLogs",
-        params: [
-          {
-            fromBlock: `0x${fromBlock.toString(16)}`,
-            toBlock: `0x${latestBlock.toString(16)}`,
-            address: wallet,
-          },
-        ],
-        id: 2,
-      }),
-    })
-
-    const txHistoryData = await txHistoryResponse.json()
-
-    // Also get direct transactions to/from the wallet using BaseScan API
-    const baseScanApiKey = process.env.BASESCAN_API_KEY
-    let transactions: any[] = []
-
-    if (baseScanApiKey) {
-      const directTxResponse = await fetch(
-        `https://api.basescan.org/api?module=account&action=txlist&address=${wallet}&startblock=${fromBlock}&endblock=${latestBlock}&sort=desc&apikey=${baseScanApiKey}`,
-      )
-
-      if (directTxResponse.ok) {
-        const directTxData = await directTxResponse.json()
-
-        if (directTxData.status === "1" && directTxData.result) {
-          transactions = directTxData.result.slice(0, 10).map((tx: any) => ({
-            hash: tx.hash,
-            from: tx.from,
-            to: tx.to,
-            value: (Number.parseInt(tx.value) / 1e18).toFixed(6),
-            blockNumber: tx.blockNumber,
-            timestamp: Number.parseInt(tx.timeStamp) * 1000,
-            type: determineTransactionType(tx),
-            token: "ETH",
-            amount: (Number.parseInt(tx.value) / 1e18).toFixed(6),
-            usdValue: Math.round((Number.parseInt(tx.value) / 1e18) * 2500), // Approximate ETH price
-            gasUsed: tx.gasUsed,
-            gasPrice: tx.gasPrice,
-            input: tx.input,
-          }))
-        }
-      }
-    }
-
-    // If no transactions found via BaseScan, generate some mock data for demonstration
+    
+    // Get transaction history using the enhanced method
+    const transactions = await blockchainMonitor.getTransactionHistory(wallet, fromBlock, latestBlock)
+    
+    // If no real transactions found, generate mock data for demonstration
     if (transactions.length === 0) {
-      transactions = generateMockTransactions(wallet, fromBlock, latestBlock)
+      return generateMockTransactions(wallet, fromBlock, latestBlock)
     }
 
     return transactions
