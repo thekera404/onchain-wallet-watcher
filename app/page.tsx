@@ -95,12 +95,15 @@ export default function EtherDropsApp() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-foreground">Loading Onchain Wallet Watcher...</p>
+          {!context?.user && (
+            <p className="text-sm text-muted-foreground mt-2">Connecting to Farcaster...</p>
+          )}
         </div>
       </div>
     )
   }
 
-  // Show connection prompt if no Farcaster account is connected
+  // Show loading while waiting for Farcaster connection
   if (!context?.user) {
     return (
       <div className="min-h-screen bg-background">
@@ -135,87 +138,12 @@ export default function EtherDropsApp() {
           </div>
         </nav>
 
-        {/* Connection Prompt */}
+        {/* Loading State */}
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center space-y-6">
-            {/* App Icon */}
-            <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl shadow-2xl flex items-center justify-center">
-              <Eye className="h-10 w-10 text-white" />
-            </div>
-            
-            {/* Welcome Message */}
-            <div className="space-y-3">
-              <h1 className="text-3xl font-bold text-card-foreground">
-                Welcome to Onchain Wallet Watcher
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.
-              </p>
-            </div>
-
-            {/* Connection Card */}
-            <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm max-w-md mx-auto">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl text-card-foreground">
-                  Connect Your Farcaster Account
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  This allows the app to access your public profile and personalize your experience.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Connection Steps */}
-                <div className="text-left space-y-3 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
-                    <span>Tap 'Connect Farcaster' below to log in</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
-                    <span>Once connected, you'll see your username and avatar at the top!</span>
-                  </div>
-                </div>
-                
-                {/* Connect Button */}
-                <Button
-                  onClick={promptAddApp}
-                  size="lg"
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3"
-                >
-                  <Bell className="h-5 w-5 mr-2" />
-                  Connect Farcaster Account
-                </Button>
-                
-                <p className="text-xs text-muted-foreground/70 text-center">
-                  Your data is secure and only public profile information is accessed
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Features Preview */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
-              <Card className="border-0 bg-card/70 backdrop-blur-sm">
-                <CardContent className="p-4 text-center">
-                  <Wallet className="h-8 w-8 text-blue-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-card-foreground">Track Wallets</p>
-                  <p className="text-xs text-muted-foreground">Monitor up to 3 Base wallets</p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 bg-card/70 backdrop-blur-sm">
-                <CardContent className="p-4 text-center">
-                  <Bell className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-card-foreground">Get Notified</p>
-                  <p className="text-xs text-muted-foreground">Real-time transaction alerts</p>
-                </CardContent>
-              </Card>
-              <Card className="border-0 bg-card/70 backdrop-blur-sm">
-                <CardContent className="p-4 text-center">
-                  <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-card-foreground">Activity Feed</p>
-                  <p className="text-xs text-muted-foreground">View transaction history</p>
-                </CardContent>
-              </Card>
-            </div>
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-card-foreground">Connecting to Farcaster</h2>
+            <p className="text-muted-foreground">Please wait while we connect your account...</p>
           </div>
         </div>
       </div>
