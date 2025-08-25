@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Trash2, ExternalLink, Copy, Zap, CheckCircle, AlertCircle } from "lucide-react"
+import { Plus, Trash2, ExternalLink, Copy, Zap, CheckCircle, AlertCircle, User, Wallet } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 interface WalletTrackerProps {
@@ -394,42 +394,132 @@ export function WalletTracker({
         </CardContent>
       </Card>
 
-      {/* Popular Wallets to Track */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Popular Base Builders</CardTitle>
-          <CardDescription>
-            {context?.user 
-              ? `Quick add popular wallets to track, ${context.user.username || 'friend'}`
-              : "Quick add popular wallets to track"
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {[
-            { name: "Base Team", address: "0x4200000000000000000000000000000000000006" },
-            { name: "Coinbase", address: "0x71660c4005BA85c37ccec55d0C4493E66Fe775d3" },
-            { name: "Base Bridge", address: "0x3154Cf16ccdb4C6d922629664174b904d80F2C35" },
-            { name: "DEGEN Token", address: "0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed" },
-            { name: "HIGHER Token", address: "0x0578d8A44db98B23BF096A382e016e29a5Ce0ffe" },
-          ].map((wallet) => (
-            <div key={wallet.address} className="flex items-center justify-between p-2 border rounded-lg">
-              <div>
-                <p className="font-medium text-sm">{wallet.name}</p>
-                <p className="font-mono text-xs text-muted-foreground">{formatAddress(wallet.address)}</p>
+      {/* Your Farcaster Wallets */}
+      {context?.user && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                <span className="text-xs font-bold text-white">
+                  {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
+                </span>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onAddWallet(wallet.address)}
-                disabled={watchedWallets.includes(wallet.address) || watchedWallets.length >= 3}
-              >
-                {watchedWallets.includes(wallet.address) ? "Added" : watchedWallets.length >= 3 ? "Limit Reached" : "Track"}
-              </Button>
+              Your Farcaster Wallets
+            </CardTitle>
+            <CardDescription>
+              {context.user.username 
+                ? `${context.user.username}'s wallets linked to Farcaster account`
+                : "Your wallets linked to Farcaster account"
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Farcaster Account Info */}
+            <div className="p-3 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                  <span className="text-sm font-bold text-white">
+                    {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-medium text-sm text-card-foreground">
+                    {context.user.username || `FID: ${context.user.fid}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Farcaster ID: {context.user.fid}
+                  </p>
+                </div>
+              </div>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+
+            {/* User's Wallets Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-card-foreground">Linked Wallets</h4>
+                <Badge variant="outline" className="text-xs">
+                  {watchedWallets.length}/3 used
+                </Badge>
+              </div>
+              
+              {/* Placeholder for user's actual wallets - this would be populated from Farcaster API */}
+              <div className="text-center py-6 text-muted-foreground">
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+                  <Wallet className="h-6 w-6 opacity-50" />
+                </div>
+                <p className="text-sm font-medium mb-1">No linked wallets found</p>
+                <p className="text-xs">
+                  {context.user.username 
+                    ? `${context.user.username} hasn't linked any wallets to their Farcaster account yet`
+                    : "You haven't linked any wallets to your Farcaster account yet"
+                  }
+                </p>
+                <div className="mt-3 text-xs text-muted-foreground/70">
+                  <p>To link wallets, you can:</p>
+                  <ul className="mt-1 space-y-1 text-left max-w-xs mx-auto">
+                    <li>• Connect your wallet in Farcaster</li>
+                    <li>• Use Farcaster's wallet linking feature</li>
+                    <li>• Add wallets manually below</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Quick Add Section */}
+              <div className="pt-3 border-t border-border/50">
+                <p className="text-xs text-muted-foreground mb-2">
+                  Or add wallets manually to track:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    { name: "Base Team", address: "0x4200000000000000000000000000000000000006" },
+                    { name: "Coinbase", address: "0x71660c4005BA85c37ccec55d0C4493E66Fe775d3" },
+                  ].map((wallet) => (
+                    <div key={wallet.address} className="flex items-center justify-between p-2 border rounded-lg bg-muted/30">
+                      <div>
+                        <p className="font-medium text-xs">{wallet.name}</p>
+                        <p className="font-mono text-xs text-muted-foreground">{formatAddress(wallet.address)}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onAddWallet(wallet.address)}
+                        disabled={watchedWallets.includes(wallet.address) || watchedWallets.length >= 3}
+                        className="text-xs h-7 px-2"
+                      >
+                        {watchedWallets.includes(wallet.address) ? "Added" : watchedWallets.length >= 3 ? "Limit" : "Add"}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Fallback for non-connected users */}
+      {!context?.user && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Wallet className="h-5 w-5" />
+              Connect to See Your Wallets
+            </CardTitle>
+            <CardDescription>
+              Connect your Farcaster account to see your linked wallets
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center py-6 text-muted-foreground">
+            <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto mb-3">
+              <User className="h-6 w-6 opacity-50" />
+            </div>
+            <p className="text-sm font-medium mb-1">Farcaster Account Required</p>
+            <p className="text-xs">
+              Sign in with your Farcaster account to view and manage your linked wallets
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
