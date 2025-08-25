@@ -5,20 +5,36 @@ import { GeistMono } from "geist/font/mono"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
+// Frame metadata (used for Farcaster frames)
+const frameMetadata = {
+  version: "1",
+  imageUrl: "https://onchain-wallet-watcher.vercel.app/splash.png",
+  splashBackgroundColor: "#0a0b2b",
+}
+
 export const metadata: Metadata = {
   title: "Onchain Wallet Watcher",
   description:
     "Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.",
   openGraph: {
     title: "Onchain Wallet Watcher",
-    description: "Track your favorite Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
-    images: ["https://onchain-wallet-watcher.vercel.app/og-image.png"],
+    description:
+      "Track your favorite Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
+    images: [
+      {
+        url: "https://onchain-wallet-watcher.vercel.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Onchain Wallet Watcher Preview",
+      },
+    ],
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Onchain Wallet Watcher",
-    description: "Track Base wallets in real-time",
-    images: ["https://onchain-wallet-watcher.vercel.app/og-image.png"],
+  other: {
+    "fc:frame": JSON.stringify(frameMetadata),
+    "og:image": "https://onchain-wallet-watcher.vercel.app/og-image.png",
+    "og:title": "Onchain Wallet Watcher",
+    "og:description":
+      "Track your favorite Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
   },
 }
 
@@ -30,18 +46,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Farcaster Mini App Meta Tags */}
-        <meta
-          name="fc:frame"
-          content='{"version":"1","imageUrl":"https://onchain-wallet-watcher.vercel.app/splash.png","splashBackgroundColor":"#0a0b2b"}}}'
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
+          html {
+            font-family: ${GeistSans.style.fontFamily};
+            --font-sans: ${GeistSans.variable};
+            --font-mono: ${GeistMono.variable};
+          }
         `}</style>
       </head>
       <body>
