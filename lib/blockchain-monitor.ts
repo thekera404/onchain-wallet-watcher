@@ -154,8 +154,14 @@ class BlockchainMonitor {
       const receipt = await tx.wait()
       const txData = await this.analyzeTransaction(tx, receipt)
       
-      if (txData && this.isSignificantTransaction(txData)) {
+      if (txData) {
+        // Send notification for every transaction (not just significant ones)
         await this.sendNotifications(txData, subscriptions)
+        
+        // Also log significant transactions separately
+        if (this.isSignificantTransaction(txData)) {
+          console.log(`[BlockchainMonitor] Significant transaction detected: ${txData.hash} - ${txData.type} - $${txData.usdValue}`)
+        }
       }
     } catch (error) {
       console.error('[BlockchainMonitor] Error processing transaction:', error)
@@ -338,7 +344,9 @@ class BlockchainMonitor {
           activityType,
           `${amount} ${token}`,
           token,
-          txData.usdValue
+          txData.usdValue,
+          txData.hash,
+          txData.blockNumber
         )
         
         console.log(`[BlockchainMonitor] Sent notification for ${activityType}: ${txData.hash}`)

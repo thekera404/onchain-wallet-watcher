@@ -14,15 +14,48 @@ export class NotificationService {
     amount: string,
     token: string,
     usdValue?: number,
+    transactionHash?: string,
+    blockNumber?: number,
   ) {
     const notificationId = `etherdrops-${walletAddress.slice(-8)}-${Date.now()}`
 
     const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
     const formatUsdValue = (value?: number) => (value ? ` ($${value.toLocaleString()})` : "")
 
-    const title = `🚨 ${activityType} Alert`
-    const body = `${formatAddress(walletAddress)}: ${amount} ${token}${formatUsdValue(usdValue)}`
-    const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://etherdrops-watcher.vercel.app"}?wallet=${walletAddress}&activity=${activityType.toLowerCase()}`
+    // Enhanced notification content based on activity type
+    let title = ""
+    let body = ""
+    
+    switch (activityType.toLowerCase()) {
+      case 'new mint':
+        title = "🎨 New Mint Detected!"
+        body = `${formatAddress(walletAddress)} minted ${amount} ${token}${formatUsdValue(usdValue)}`
+        break
+      case 'token swap':
+        title = "🔄 Token Swap Alert!"
+        body = `${formatAddress(walletAddress)} swapped ${amount} ${token}${formatUsdValue(usdValue)}`
+        break
+      case 'transfer':
+        title = "💸 Transfer Detected!"
+        body = `${formatAddress(walletAddress)} transferred ${amount} ${token}${formatUsdValue(usdValue)}`
+        break
+      case 'contract interaction':
+        title = "⚡ Contract Activity!"
+        body = `${formatAddress(walletAddress)} interacted with contract: ${amount} ${token}${formatUsdValue(usdValue)}`
+        break
+      default:
+        title = `🚨 ${activityType} Alert`
+        body = `${formatAddress(walletAddress)}: ${amount} ${token}${formatUsdValue(usdValue)}`
+    }
+
+    // Add transaction details to URL if available
+    let targetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://etherdrops-watcher.vercel.app"}?wallet=${walletAddress}&activity=${activityType.toLowerCase()}`
+    if (transactionHash) {
+      targetUrl += `&tx=${transactionHash}`
+    }
+    if (blockNumber) {
+      targetUrl += `&block=${blockNumber}`
+    }
 
     try {
       const response = await fetch("/api/send-notification", {
@@ -90,6 +123,72 @@ export class NotificationService {
       return results
     } catch (error) {
       console.error("[v0] Failed to send bulk notifications:", error)
+      throw error
+    }
+  }
+
+  static async sendWalletAddedNotification(fid: string, walletAddress: string, username?: string) {
+    const notificationId = `wallet-added-${fid}-${Date.now()}`
+    const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
+    
+    const title = "🔍 New Wallet Added!"
+    const body = username 
+      ? `${username} added ${formatAddress(walletAddress)} to watch list`
+      : `New wallet ${formatAddress(walletAddress)} added to watch list`
+    
+    const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://etherdrops-watcher.vercel.app"}?wallet=${walletAddress}`
+
+    try {
+      const response = await fetch("/api/send-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fid,
+          title,
+          body,
+          targetUrl,
+          notificationId,
+        }),
+      })
+
+      const result = await response.json()
+      console.log("[v0] Wallet added notification sent:", result)
+      return result
+    } catch (error) {
+      console.error("[v0] Failed to send wallet added notification:", error)
+      throw error
+    }
+  }
+
+  static async sendWalletRemovedNotification(fid: string, walletAddress: string, username?: string) {
+    const notificationId = `wallet-removed-${fid}-${Date.now()}`
+    const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`
+    
+    const title = "❌ Wallet Removed"
+    const body = username 
+      ? `${username} removed ${formatAddress(walletAddress)} from watch list`
+      : `Wallet ${formatAddress(walletAddress)} removed from watch list`
+    
+    const targetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://etherdrops-watcher.vercher.app"}?view=wallets`
+
+    try {
+      const response = await fetch("/api/send-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fid,
+          title,
+          body,
+          targetUrl,
+          notificationId,
+        }),
+      })
+
+      const result = await response.json()
+      console.log("[v0] Wallet removed notification sent:", result)
+      return result
+    } catch (error) {
+      console.error("[v0] Failed to send wallet removed notification:", error)
       throw error
     }
   }

@@ -74,6 +74,26 @@ export function WalletTracker({
       // Check wallet limit before adding
       if (watchedWallets.length >= 3) {
         setValidationStatus("invalid")
+        
+        // Send Farcaster notification about wallet limit reached
+        if (context?.user?.fid) {
+          try {
+            await fetch("/api/send-notification", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fid: context.user.fid,
+                title: "🚫 Wallet Limit Reached",
+                body: "You've reached the maximum of 3 wallets. Remove one to add another.",
+                targetUrl: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}`,
+                notificationId: `wallet-limit-${context.user.fid}-${Date.now()}`,
+              }),
+            })
+          } catch (error) {
+            console.error("[WalletTracker] Failed to send wallet limit notification:", error)
+          }
+        }
+        
         toast({
           title: "Wallet Limit Reached",
           description: "You can only track up to 3 wallets. Remove one to add another.",
@@ -118,6 +138,25 @@ export function WalletTracker({
         setNewWallet("")
         setValidationStatus("idle")
 
+        // Send Farcaster notification for wallet addition
+        if (context?.user?.fid) {
+          try {
+            await fetch("/api/send-notification", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fid: context.user.fid,
+                title: "🔍 New Wallet Added",
+                body: `Now tracking ${newWallet.trim().slice(0, 6)}...${newWallet.trim().slice(-4)} on Base network`,
+                targetUrl: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}?wallet=${newWallet.trim()}`,
+                notificationId: `wallet-added-${context.user.fid}-${Date.now()}`,
+              }),
+            })
+          } catch (error) {
+            console.error("[WalletTracker] Failed to send wallet addition notification:", error)
+          }
+        }
+
         toast({
           title: "Wallet Added Successfully",
           description: "Now tracking wallet activity on Base with real-time notifications",
@@ -149,6 +188,23 @@ export function WalletTracker({
             userId: context.user.fid,
           }),
         })
+
+        // Send Farcaster notification for wallet removal
+        try {
+          await fetch("/api/send-notification", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fid: context.user.fid,
+              title: "❌ Wallet Removed",
+              body: `Stopped tracking ${address.slice(0, 6)}...${address.slice(-4)}`,
+              targetUrl: `${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}`,
+              notificationId: `wallet-removed-${context.user.fid}-${Date.now()}`,
+            }),
+          })
+        } catch (error) {
+          console.error("[WalletTracker] Failed to send wallet removal notification:", error)
+        }
       } catch (error) {
         console.error("[WalletTracker] Error removing wallet from monitoring:", error)
       }
