@@ -48,9 +48,15 @@ export default function EtherDropsApp() {
 
   const addWallet = (address: string) => {
     if (address && !watchedWallets.includes(address)) {
+      if (watchedWallets.length >= 3) {
+        // Show error toast or handle limit reached
+        return false
+      }
       setWatchedWallets([...watchedWallets, address])
       startMonitoring(address)
+      return true
     }
+    return false
   }
 
   const removeWallet = (address: string) => {
@@ -162,7 +168,7 @@ export default function EtherDropsApp() {
                 <Wallet className="h-4 w-4 text-blue-600" />
                 <div>
                   <p className="text-xs text-muted-foreground">Watching</p>
-                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}</p>
+                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}/3</p>
                 </div>
               </div>
             </CardContent>
@@ -200,7 +206,12 @@ export default function EtherDropsApp() {
           </TabsList>
 
           <TabsContent value="wallets" className="space-y-4">
-            <WalletTracker watchedWallets={watchedWallets} onAddWallet={addWallet} onRemoveWallet={removeWallet} context={context} />
+            <WalletTracker 
+              watchedWallets={watchedWallets} 
+              onAddWallet={addWallet} 
+              onRemoveWallet={removeWallet} 
+              context={context} 
+            />
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-4">

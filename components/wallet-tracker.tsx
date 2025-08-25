@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast"
 
 interface WalletTrackerProps {
   watchedWallets: string[]
-  onAddWallet: (address: string) => void
+  onAddWallet: (address: string) => boolean
   onRemoveWallet: (address: string) => void
   context?: any
 }
@@ -71,6 +71,18 @@ export function WalletTracker({
 
       setValidationStatus("valid")
 
+      // Check wallet limit before adding
+      if (watchedWallets.length >= 3) {
+        setValidationStatus("invalid")
+        toast({
+          title: "Wallet Limit Reached",
+          description: "You can only track up to 3 wallets. Remove one to add another.",
+          variant: "destructive",
+        })
+        setIsValidating(false)
+        return
+      }
+
       // Add wallet to monitoring system
       if (context?.user?.fid) {
         try {
@@ -101,14 +113,16 @@ export function WalletTracker({
         }
       }
 
-      onAddWallet(newWallet.trim())
-      setNewWallet("")
-      setValidationStatus("idle")
+      const success = onAddWallet(newWallet.trim())
+      if (success) {
+        setNewWallet("")
+        setValidationStatus("idle")
 
-      toast({
-        title: "Wallet Added Successfully",
-        description: "Now tracking wallet activity on Base with real-time notifications",
-      })
+        toast({
+          title: "Wallet Added Successfully",
+          description: "Now tracking wallet activity on Base with real-time notifications",
+        })
+      }
 
     } catch (error) {
       console.error("[WalletTracker] Error validating wallet:", error)
@@ -187,32 +201,51 @@ export function WalletTracker({
           </CardTitle>
           <CardDescription>
             Track builders, DAOs, or friends on Base network with real-time notifications
+            {watchedWallets.length > 0 && (
+              <span className="block mt-1 text-xs text-muted-foreground">
+                {watchedWallets.length}/3 wallets being tracked
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="relative">
-            <Input
-              placeholder="0x... (Ethereum address)"
-              value={newWallet}
-              onChange={(e) => {
-                setNewWallet(e.target.value)
-                setValidationStatus("idle")
-              }}
-              className="font-mono text-sm pr-10"
-            />
-            {validationStatus !== "idle" && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                {getValidationIcon()}
+          {watchedWallets.length >= 3 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              <div className="bg-yellow-100 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <AlertCircle className="h-5 w-5 text-yellow-600 mx-auto mb-2" />
+                <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Wallet Limit Reached</p>
+                <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                  You can only track up to 3 wallets. Remove one to add another.
+                </p>
               </div>
-            )}
-          </div>
-          <Button 
-            onClick={validateAndAddWallet} 
-            disabled={!newWallet.trim() || isValidating} 
-            className="w-full"
-          >
-            {isValidating ? "Validating..." : "Add Wallet"}
-          </Button>
+            </div>
+          ) : (
+            <>
+              <div className="relative">
+                <Input
+                  placeholder="0x... (Ethereum address)"
+                  value={newWallet}
+                  onChange={(e) => {
+                    setNewWallet(e.target.value)
+                    setValidationStatus("idle")
+                  }}
+                  className="font-mono text-sm pr-10"
+                />
+                {validationStatus !== "idle" && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {getValidationIcon()}
+                  </div>
+                )}
+              </div>
+              <Button 
+                onClick={validateAndAddWallet} 
+                disabled={!newWallet.trim() || isValidating} 
+                className="w-full"
+              >
+                {isValidating ? "Validating..." : "Add Wallet"}
+              </Button>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -227,6 +260,33 @@ export function WalletTracker({
             {watchedWallets.length === 0
               ? "No wallets being tracked yet"
               : `Tracking ${watchedWallets.length} wallet${watchedWallets.length > 1 ? "s" : ""} in real-time`}
+            {watchedWallets.length > 0 && (
+              <div className="mt-2">
+                <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <span>Wallet Limit</span>
+                  <span>{watchedWallets.length}/3</span>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      watchedWallets.length === 1 ? 'bg-blue-500 w-1/3' :
+                      watchedWallets.length === 2 ? 'bg-yellow-500 w-2/3' :
+                      watchedWallets.length === 3 ? 'bg-red-500 w-full' : 'w-0'
+                    }`}
+                  />
+                </div>
+                {watchedWallets.length === 2 && (
+                  <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    ⚠️ You can add 1 more wallet
+                  </p>
+                )}
+                {watchedWallets.length === 3 && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    🚫 Wallet limit reached
+                  </p>
+                )}
+              </div>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -298,9 +358,9 @@ export function WalletTracker({
                 variant="outline"
                 size="sm"
                 onClick={() => onAddWallet(wallet.address)}
-                disabled={watchedWallets.includes(wallet.address)}
+                disabled={watchedWallets.includes(wallet.address) || watchedWallets.length >= 3}
               >
-                {watchedWallets.includes(wallet.address) ? "Added" : "Track"}
+                {watchedWallets.includes(wallet.address) ? "Added" : watchedWallets.length >= 3 ? "Limit Reached" : "Track"}
               </Button>
             </div>
           ))}
