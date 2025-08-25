@@ -20,9 +20,22 @@ export default function EtherDropsApp() {
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
-    // Initialize Farcaster SDK
+    // Initialize Farcaster SDK with timeout
     const initializeApp = async () => {
       try {
+        // Check if we're in a Farcaster environment
+        const isFarcasterEnv = window.location.hostname.includes('farcaster') || 
+                               window.location.hostname.includes('warpcast') ||
+                               window.location.hostname.includes('localhost') ||
+                               window.location.hostname.includes('127.0.0.1')
+
+        if (!isFarcasterEnv) {
+          console.log("[v0] Not in Farcaster environment, using fallback mode")
+          setIsReady(true)
+          setIsConnected(false)
+          return
+        }
+
         // Import SDK dynamically for better performance
         const { sdk: farcasterSdk } = await import("@farcaster/frame-sdk")
         setSdk(farcasterSdk)
@@ -41,10 +54,20 @@ export default function EtherDropsApp() {
         console.error("Failed to initialize Farcaster SDK:", error)
         // Fallback for development/testing
         setIsReady(true)
+        setIsConnected(false)
       }
     }
 
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.log("[v0] Farcaster SDK initialization timeout, proceeding with fallback")
+      setIsReady(true)
+      setIsConnected(false)
+    }, 5000) // 5 second timeout
+
     initializeApp()
+
+    return () => clearTimeout(timeoutId)
   }, [])
 
   const addWallet = (address: string) => {
@@ -150,12 +173,34 @@ export default function EtherDropsApp() {
           </div>
         </nav>
 
-        {/* Loading State */}
+        {/* Fallback State - Allow users to continue without Farcaster */}
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center space-y-6">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <h2 className="text-xl font-semibold text-card-foreground">Connecting to Farcaster</h2>
-            <p className="text-muted-foreground">Please wait while we connect your account...</p>
+            <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Eye className="h-8 w-8 text-yellow-500" />
+            </div>
+            <h2 className="text-xl font-semibold text-card-foreground">Farcaster Connection Unavailable</h2>
+            <p className="text-muted-foreground mb-6">
+              You can still use the wallet watcher features, but Farcaster notifications won't be available.
+            </p>
+            <div className="space-y-4">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="mr-2"
+              >
+                Retry Connection
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsConnected(false)
+                  setContext({ user: null, client: { added: false } })
+                }}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+              >
+                Continue Without Farcaster
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -251,6 +296,17 @@ export default function EtherDropsApp() {
                 </>
               )}
               
+              {/* Demo Data Button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadDemoData}
+                className="p-2 flex-shrink-0 text-green-600 hover:text-green-700"
+                title="Load Demo Data"
+              >
+                <Database className="h-4 w-4" />
+              </Button>
+              
               {/* Theme Toggle */}
               <Button
                 variant="ghost"
@@ -329,9 +385,10 @@ export default function EtherDropsApp() {
                   </>
                 ) : (
                   <>
-                    • Add wallets to watch
-                    <br />• Get real-time notifications
+                    • Add wallets to watch (up to 5)
                     <br />• Track high-value transactions
+                    <br />• Use demo data for testing
+                    <br />⚠️ Farcaster notifications unavailable
                   </>
                 )}
               </div>
@@ -369,7 +426,7 @@ export default function EtherDropsApp() {
                 <Bell className="h-4 w-4 text-purple-600" />
                 <div>
                   <p className="text-xs text-muted-foreground">Alerts</p>
-                  <p className="text-lg font-bold text-card-foreground">{context?.client?.added ? "ON" : "OFF"}</p>
+                  <p className="text-lg font-bold text-card-foreground">{context?.client?.added ? "ON" : context?.user ? "OFF" : "N/A"}</p>
                 </div>
               </div>
             </CardContent>
