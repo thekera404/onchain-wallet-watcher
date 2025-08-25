@@ -102,64 +102,104 @@ export default function EtherDropsApp() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card/90 backdrop-blur-md border-b border-border/50 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-md mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      {/* Responsive Navbar */}
+      <nav className="bg-card/90 backdrop-blur-md border-b border-border/50 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo and Brand */}
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl shadow-lg">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl shadow-lg flex-shrink-0">
                 <Eye className="h-5 w-5 text-white" />
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <h1 className="text-lg font-bold text-card-foreground">Onchain Wallet Watcher</h1>
                 <p className="text-sm text-muted-foreground">Track Base onchain activity</p>
               </div>
+              <div className="sm:hidden">
+                <h1 className="text-base font-bold text-card-foreground">Wallet Watcher</h1>
+                <p className="text-xs text-muted-foreground">Base activity</p>
+              </div>
             </div>
+
+            {/* Right Side Actions */}
             <div className="flex items-center gap-2">
-              {/* User Profile Display */}
+              {/* User Profile Display - Responsive */}
               {context?.user && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-card/50 rounded-lg border border-border/50">
-                  <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-bold text-white">
-                      {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
-                    </span>
+                <>
+                  {/* Desktop Profile */}
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-card/50 rounded-lg border border-border/50">
+                    <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">
+                        {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-card-foreground">
+                        {context.user.username || `FID: ${context.user.fid}`}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {watchedWallets.length}/3 wallets
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-medium text-card-foreground">
-                      {context.user.username || `FID: ${context.user.fid}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {watchedWallets.length}/3 wallets
-                    </p>
+                  
+                  {/* Mobile Profile */}
+                  <div className="sm:hidden flex items-center gap-2 px-2 py-1 bg-card/50 rounded-lg border border-border/50">
+                    <div className="w-5 h-5 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-bold text-white">
+                        {context.user.username ? context.user.username.charAt(0).toUpperCase() : 'U'}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-card-foreground">
+                        {watchedWallets.length}/3
+                      </p>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
               
+              {/* Theme Toggle */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2"
+                className="p-2 flex-shrink-0"
               >
                 {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
+              
+              {/* Add App Button - Responsive */}
               {!context?.client?.added && (
-                <Button
-                  onClick={promptAddApp}
-                  size="sm"
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  <Bell className="h-4 w-4 mr-1" />
-                  Add App
-                </Button>
+                <>
+                  {/* Desktop Button */}
+                  <Button
+                    onClick={promptAddApp}
+                    size="sm"
+                    className="hidden sm:flex bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  >
+                    <Bell className="h-4 w-4 mr-1" />
+                    Add App
+                  </Button>
+                  
+                  {/* Mobile Button */}
+                  <Button
+                    onClick={promptAddApp}
+                    size="sm"
+                    className="sm:hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 p-2"
+                  >
+                    <Bell className="h-4 w-4" />
+                  </Button>
+                </>
               )}
             </div>
           </div>
         </div>
-      </div>
+      </nav>
 
       {/* Main Content */}
-      <div className="max-w-md mx-auto p-4 space-y-4">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-md mx-auto space-y-4">
         {/* Welcome Card for new users */}
         {watchedWallets.length === 0 && (
           <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm">
@@ -167,7 +207,7 @@ export default function EtherDropsApp() {
               <CardTitle className="text-lg text-card-foreground">
                 {context?.user ? (
                   <>
-                    Welcome, {context.user.username || `FID: ${context.user.fid}`}! 👋
+                    Welcome, {context.user.username || `FID: ${context.user.fid}`}!
                   </>
                 ) : (
                   "Welcome to Onchain Wallet Watcher!"
@@ -296,6 +336,7 @@ export default function EtherDropsApp() {
             <NotificationSettings context={context} sdk={sdk} />
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   )
