@@ -11,6 +11,16 @@ const frameMetadata = {
   version: "1",
   imageUrl: "https://onchain-wallet-watcher.vercel.app/splash.png",
   splashBackgroundColor: "#0a0b2b",
+  button: {
+    title: "Start Watching",
+    action: {
+      type: "launch_frame",
+      name: "Onchain Wallet Watche",
+      url: "https://onchain-wallet-watcher.vercel.app/",
+      splashImageUrl: "https://onchain-wallet-watcher.vercel.app/splash.png", // wide splash image
+      splashBackgroundColor: "#0a0b2b",
+    },
+  },
 }
 
 export const metadata: Metadata = {
