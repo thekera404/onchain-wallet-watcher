@@ -103,7 +103,7 @@ export default function EtherDropsApp() {
                 <Eye className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">EtherDROPS Watcher</h1>
+                <h1 className="text-lg font-bold text-gray-900">Onchain Wallet Watcher</h1>
                 <p className="text-sm text-gray-600">Track Base onchain activity</p>
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function EtherDropsApp() {
         {watchedWallets.length === 0 && (
           <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Welcome to EtherDROPS! 👋</CardTitle>
+              <CardTitle className="text-lg">Welcome to Onchain Wallet Watcher! 👋</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 mb-3">

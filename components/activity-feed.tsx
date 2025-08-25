@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowUpRight, Coins, RefreshCw, ExternalLink, Bell } from "lucide-react"
+import { ArrowUpRight, Coins, RefreshCw, ExternalLink, Bell, Zap } from "lucide-react"
 import { NotificationService } from "@/lib/notification-service"
 
 interface ActivityFeedProps {
@@ -15,11 +15,14 @@ interface ActivityFeedProps {
 interface Transaction {
   id: string
   wallet: string
-  type: "mint" | "transfer" | "swap"
+  type: "mint" | "transfer" | "swap" | "contract_interaction"
   amount: string
   token: string
   timestamp: Date
   hash: string
+  usdValue?: number
+  from: string
+  to: string
 }
 
 export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
@@ -27,6 +30,7 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [isMonitoring, setIsMonitoring] = useState(false)
+  const [realTimeUpdates, setRealTimeUpdates] = useState<Transaction[]>([])
 
   const fetchActivity = async () => {
     if (watchedWallets.length === 0) return
@@ -34,46 +38,56 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/monitor-wallets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ wallets: watchedWallets }),
-      })
+      // Get real-time transaction data for all watched wallets
+      const allTransactions: Transaction[] = []
+      
+      for (const wallet of watchedWallets) {
+        try {
+          const response = await fetch("/api/get-wallet-activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              address: wallet,
+              limit: 5 // Get last 5 transactions per wallet
+            }),
+          })
 
-      const data = await response.json()
-      console.log("[v0] Activity data received:", data)
-
-      const formattedTransactions: Transaction[] =
-        data.transactions?.map((tx: any, index: number) => ({
-          id: `${tx.hash}-${index}`,
-          wallet: tx.from.slice(0, 6) + "..." + tx.from.slice(-4),
-          type: tx.type,
-          amount: tx.amount || tx.value,
-          token: tx.token || "ETH",
-          timestamp: new Date(tx.timestamp),
-          hash: tx.hash,
-        })) || []
-
-      setTransactions(formattedTransactions)
-      setLastUpdate(new Date())
-
-      if (data.significantTransactions?.length > 0 && context?.user?.fid) {
-        for (const tx of data.significantTransactions) {
-          try {
-            await NotificationService.sendWalletActivityNotification(
-              context.user.fid.toString(),
-              tx.from,
-              tx.type.toUpperCase(),
-              tx.amount || tx.value,
-              tx.token || "ETH",
-            )
-          } catch (error) {
-            console.error("[v0] Failed to send notification:", error)
+          if (response.ok) {
+            const data = await response.json()
+            if (data.transactions) {
+              const formattedTxs = data.transactions.map((tx: any, index: number) => ({
+                id: `${tx.hash}-${index}`,
+                wallet: wallet.slice(0, 6) + "..." + wallet.slice(-4),
+                type: tx.type,
+                amount: tx.amount || tx.value,
+                token: tx.token || "ETH",
+                timestamp: new Date(tx.timestamp),
+                hash: tx.hash,
+                usdValue: tx.usdValue,
+                from: tx.from,
+                to: tx.to
+              }))
+              allTransactions.push(...formattedTxs)
+            }
           }
+        } catch (error) {
+          console.error(`[ActivityFeed] Error fetching activity for ${wallet}:`, error)
         }
       }
+
+      // Sort by timestamp (newest first) and limit to 20 transactions
+      const sortedTransactions = allTransactions
+        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .slice(0, 20)
+
+      setTransactions(sortedTransactions)
+      setLastUpdate(new Date())
+
+      console.log(`[ActivityFeed] Fetched ${sortedTransactions.length} transactions for ${watchedWallets.length} wallets`)
+
     } catch (error) {
-      console.error("[v0] Failed to fetch activity:", error)
+      console.error("[ActivityFeed] Failed to fetch activity:", error)
+      // Fallback to mock data for demonstration
       setTransactions([
         {
           id: "1",
@@ -83,6 +97,8 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
           token: "USDC",
           timestamp: new Date(Date.now() - 1000 * 60 * 5),
           hash: "0xabc123...",
+          from: "0x4200000000000000000000000000000000000006",
+          to: "0x0000000000000000000000000000000000000000"
         },
         {
           id: "2",
@@ -92,6 +108,8 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
           token: "ETH",
           timestamp: new Date(Date.now() - 1000 * 60 * 15),
           hash: "0xdef456...",
+          from: "0x71660c4005BA85c37ccec55d0C4493E66Fe775d3",
+          to: "0x0000000000000000000000000000000000000000"
         },
       ])
     } finally {
@@ -99,19 +117,90 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
     }
   }
 
+  // Real-time updates using Server-Sent Events or polling
   useEffect(() => {
+    if (watchedWallets.length === 0) return
+
+    setIsMonitoring(true)
+    
+    // Initial fetch
     fetchActivity()
 
-    if (watchedWallets.length > 0) {
-      setIsMonitoring(true)
-      const interval = setInterval(fetchActivity, 30000) // Check every 30 seconds
+    // Set up real-time monitoring
+    const interval = setInterval(() => {
+      fetchActivity()
+    }, 30000) // Check every 30 seconds
 
-      return () => {
-        clearInterval(interval)
-        setIsMonitoring(false)
-      }
+    // Also check for new transactions more frequently
+    const quickInterval = setInterval(() => {
+      checkForNewTransactions()
+    }, 10000) // Check every 10 seconds
+
+    return () => {
+      clearInterval(interval)
+      clearInterval(quickInterval)
+      setIsMonitoring(false)
     }
   }, [watchedWallets])
+
+  const checkForNewTransactions = async () => {
+    if (watchedWallets.length === 0) return
+
+    try {
+      // Check for new transactions since last update
+      const response = await fetch("/api/check-new-transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          wallets: watchedWallets,
+          since: lastUpdate?.toISOString() || new Date(Date.now() - 60000).toISOString()
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.newTransactions && data.newTransactions.length > 0) {
+          // Add new transactions to the top
+          const newTxs = data.newTransactions.map((tx: any, index: number) => ({
+            id: `${tx.hash}-new-${index}`,
+            wallet: tx.from.slice(0, 6) + "..." + tx.from.slice(-4),
+            type: tx.type,
+            amount: tx.amount || tx.value,
+            token: tx.token || "ETH",
+            timestamp: new Date(tx.timestamp),
+            hash: tx.hash,
+            usdValue: tx.usdValue,
+            from: tx.from,
+            to: tx.to
+          }))
+
+          setTransactions(prev => [...newTxs, ...prev].slice(0, 20))
+          setRealTimeUpdates(prev => [...newTxs, ...prev].slice(0, 5))
+          setLastUpdate(new Date())
+
+          // Send notifications for new transactions
+          if (context?.user?.fid) {
+            for (const tx of data.newTransactions) {
+              try {
+                await NotificationService.sendWalletActivityNotification(
+                  context.user.fid.toString(),
+                  tx.from,
+                  tx.type.toUpperCase(),
+                  tx.amount || tx.value,
+                  tx.token || "ETH",
+                  tx.usdValue
+                )
+              } catch (error) {
+                console.error("[ActivityFeed] Failed to send notification:", error)
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[ActivityFeed] Error checking for new transactions:", error)
+    }
+  }
 
   const getTransactionIcon = (type: string) => {
     switch (type) {
@@ -121,6 +210,8 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
         return <ArrowUpRight className="h-4 w-4 text-blue-600" />
       case "swap":
         return <RefreshCw className="h-4 w-4 text-purple-600" />
+      case "contract_interaction":
+        return <Zap className="h-4 w-4 text-orange-600" />
       default:
         return <ArrowUpRight className="h-4 w-4 text-gray-600" />
     }
@@ -134,6 +225,8 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
         return "bg-blue-100 text-blue-800"
       case "swap":
         return "bg-purple-100 text-purple-800"
+      case "contract_interaction":
+        return "bg-orange-100 text-orange-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -149,9 +242,16 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
     return `${Math.floor(diffInMinutes / 1440)}d ago`
   }
 
+  const formatUsdValue = (value?: number) => {
+    if (!value) return ""
+    return ` ($${value.toLocaleString()})`
+  }
+
   const openTransaction = (hash: string) => {
     window.open(`https://basescan.org/tx/${hash}`, "_blank")
   }
+
+  const allTransactions = [...realTimeUpdates, ...transactions].slice(0, 20)
 
   return (
     <div className="space-y-4">
@@ -176,6 +276,11 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
                     <span className="text-xs text-blue-600">Notifications enabled</span>
                   </div>
                 )}
+                <div className="flex items-center gap-1 mt-1">
+                  <span className="text-xs text-gray-600">
+                    Monitoring {watchedWallets.length} wallet{watchedWallets.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={fetchActivity} disabled={isLoading}>
@@ -199,7 +304,7 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
             <p className="text-gray-600">Loading activity...</p>
           </CardContent>
         </Card>
-      ) : transactions.length === 0 ? (
+      ) : allTransactions.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-gray-500">
             <ArrowUpRight className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -209,8 +314,10 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
         </Card>
       ) : (
         <div className="space-y-3">
-          {transactions.map((tx) => (
-            <Card key={tx.id} className="hover:shadow-md transition-shadow">
+          {allTransactions.map((tx) => (
+            <Card key={tx.id} className={`hover:shadow-md transition-shadow ${
+              realTimeUpdates.some(rt => rt.id === tx.id) ? 'ring-2 ring-green-200 bg-green-50/50' : ''
+            }`}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -219,9 +326,12 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
                       <div className="flex items-center gap-2">
                         <Badge className={getTransactionColor(tx.type)}>{tx.type.toUpperCase()}</Badge>
                         <span className="font-mono text-sm text-gray-600">{tx.wallet}</span>
+                        {realTimeUpdates.some(rt => rt.id === tx.id) && (
+                          <Badge className="bg-green-100 text-green-800 text-xs">NEW</Badge>
+                        )}
                       </div>
                       <p className="font-medium">
-                        {tx.amount} {tx.token}
+                        {tx.amount} {tx.token}{formatUsdValue(tx.usdValue)}
                       </p>
                       <p className="text-sm text-gray-500">{formatTimeAgo(tx.timestamp)}</p>
                     </div>

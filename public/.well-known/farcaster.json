@@ -2,18 +2,18 @@
   "accountAssociation": {
     "header": "eyJmaWQiOjU0NDgsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg2MWQwMEFENzYwNjhGOEQ0NzQwYzM1OEM4QzAzYUFFYjUxMGI1OTBEIn0",
     "payload": "eyJkb21haW4iOiJldGhlcmRyb3BzLXdhdGNoZXIudmVyY2VsLmFwcCJ9",
-    "signature": "MHg3NmRkOWVlMjE4OGEyMjliNzExZjUzOTkxYTc1NmEzMGZjNTA3NmE5OTU5OWJmOWFmYjYyMzAyZWQxMWQ2MWFmNTExYzlhYWVjNjQ3OWMzODcyMTI5MzA2YmJhYjdhMTE0MmRhMjA4MmNjNTM5MTJiY2MyMDRhMWFjZTY2NjE5OTFj"
+    "signature": "MHg3NmRkOWVlMjE4OGEyMjliNzExZjUzOTkxYTc1NmEzMGZjNTA3NmE5OTU5OWJmOWFmYjYyMzOTFj"
   },
-  "miniapp": {
+  "frame": {
     "version": "1",
-    "name": "EtherDROPS Watcher",
-    "iconUrl": "https://etherdrops-watcher.vercel.app/icon.png",
-    "homeUrl": "https://etherdrops-watcher.vercel.app",
-    "imageUrl": "https://etherdrops-watcher.vercel.app/og-image.png",
-    "buttonTitle": "👁️ Start Watching",
-    "splashImageUrl": "https://etherdrops-watcher.vercel.app/splash.png",
+    "name": "Onchain Wallet Watcher",
+    "iconUrl": "https://onchain-wallet-watcher.vercel.app/icon.png",
+    "homeUrl": "https://onchain-wallet-watcher.vercel.app",
+    "imageUrl": "https://onchain-wallet-watcher.vercel.app/og-image.png",
+    "buttonTitle": "Start Watching",
+    "splashImageUrl": "https://onchain-wallet-watcher.vercel.app/splash.png",
     "splashBackgroundColor": "#3B82F6",
-    "webhookUrl": "https://etherdrops-watcher.vercel.app/api/webhook",
+    "webhookUrl": "https://onchain-wallet-watcher.vercel.app/api/webhook",
     "subtitle": "Track Base wallets like EtherDROPS",
     "description": "Monitor specific Base wallets (builders, DAOs, friends) and get real-time notifications when they mint, transfer, or swap tokens. Stay updated on onchain activity that matters to you.",
     "primaryCategory": "defi",

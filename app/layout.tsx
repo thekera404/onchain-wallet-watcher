@@ -9,7 +9,6 @@ export const metadata: Metadata = {
   title: "Onchain Wallet Watcher | Track Base Wallets",
   description:
     "Monitor specific Base wallets and get notified when they mint or move tokens. Track builders, DAOs, and friends onchain activity.",
-  generator: "v0.app",
   openGraph: {
     title: "Onchain Wallet Watcher",
     description: "Track Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
@@ -34,7 +33,7 @@ export default function RootLayout({
         {/* Farcaster Mini App Meta Tags */}
         <meta
           name="fc:frame"
-          content='{"version":"1","imageUrl":"https://wallet-watcher.vercel.app/og-image.png","button":{"title":"👁️ Start Watching","action":{"type":"launch_frame","url":"https://wallet-watcher.vercel.app","name":"Onchain Wallet Watcher","splashImageUrl":"https://wallet-watcher.vercel.app/splash.png","splashBackgroundColor":"#3B82F6"}}}'
+          content='{"version":"1","imageUrl":"https://onchain-wallet-watcher.vercel.app/splash.png","splashBackgroundColor":"#3B82F6"}}}'
         />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <style>{`
