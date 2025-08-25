@@ -100,6 +100,128 @@ export default function EtherDropsApp() {
     )
   }
 
+  // Show connection prompt if no Farcaster account is connected
+  if (!context?.user) {
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <nav className="bg-card/90 backdrop-blur-md border-b border-border/50 sticky top-0 z-10 shadow-sm">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl shadow-lg flex-shrink-0">
+                  <Eye className="h-5 w-5 text-white" />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-bold text-card-foreground">Onchain Wallet Watcher</h1>
+                  <p className="text-sm text-muted-foreground">Track Base onchain activity</p>
+                </div>
+                <div className="sm:hidden">
+                  <h1 className="text-base font-bold text-card-foreground">Wallet Watcher</h1>
+                  <p className="text-xs text-muted-foreground">Base activity</p>
+                </div>
+              </div>
+              
+              {/* Theme Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2 flex-shrink-0"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Connection Prompt */}
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center space-y-6">
+            {/* App Icon */}
+            <div className="mx-auto w-20 h-20 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl shadow-2xl flex items-center justify-center">
+              <Eye className="h-10 w-10 text-white" />
+            </div>
+            
+            {/* Welcome Message */}
+            <div className="space-y-3">
+              <h1 className="text-3xl font-bold text-card-foreground">
+                Welcome to Onchain Wallet Watcher
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-md mx-auto">
+                Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.
+              </p>
+            </div>
+
+            {/* Connection Card */}
+            <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm max-w-md mx-auto">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-xl text-card-foreground">
+                  Connect Your Farcaster Account
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  This allows the app to access your public profile and personalize your experience.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Connection Steps */}
+                <div className="text-left space-y-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+                    <span>Tap 'Connect Farcaster' below to log in</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+                    <span>Once connected, you'll see your username and avatar at the top!</span>
+                  </div>
+                </div>
+                
+                {/* Connect Button */}
+                <Button
+                  onClick={promptAddApp}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3"
+                >
+                  <Bell className="h-5 w-5 mr-2" />
+                  Connect Farcaster Account
+                </Button>
+                
+                <p className="text-xs text-muted-foreground/70 text-center">
+                  Your data is secure and only public profile information is accessed
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Features Preview */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto">
+              <Card className="border-0 bg-card/70 backdrop-blur-sm">
+                <CardContent className="p-4 text-center">
+                  <Wallet className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-card-foreground">Track Wallets</p>
+                  <p className="text-xs text-muted-foreground">Monitor up to 3 Base wallets</p>
+                </CardContent>
+              </Card>
+              <Card className="border-0 bg-card/70 backdrop-blur-sm">
+                <CardContent className="p-4 text-center">
+                  <Bell className="h-8 w-8 text-purple-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-card-foreground">Get Notified</p>
+                  <p className="text-xs text-muted-foreground">Real-time transaction alerts</p>
+                </CardContent>
+              </Card>
+              <Card className="border-0 bg-card/70 backdrop-blur-sm">
+                <CardContent className="p-4 text-center">
+                  <TrendingUp className="h-8 w-8 text-green-600 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-card-foreground">Activity Feed</p>
+                  <p className="text-xs text-muted-foreground">View transaction history</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Responsive Navbar */}
@@ -234,10 +356,15 @@ export default function EtherDropsApp() {
         {watchedWallets.length === 0 && (
           <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-card-foreground">
+              <CardTitle className="text-lg text-card-foreground flex items-center gap-3">
+                <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
                 {context?.user ? (
                   <>
-                    Welcome, {context.user.username || `FID: ${context.user.fid}`}!
+                    Welcome back, {context.user.username || `FID: ${context.user.fid}`}!
                   </>
                 ) : (
                   "Welcome to Onchain Wallet Watcher!"
@@ -247,17 +374,24 @@ export default function EtherDropsApp() {
             <CardContent>
               <p className="text-sm text-muted-foreground mb-3">
                 {context?.user 
-                  ? `Ready to start tracking Base wallets, ${context.user.username || 'friend'}? Add wallets to watch and get notified when they mint, swap, or transfer tokens.`
+                  ? `Great! Your Farcaster profile is now connected. You can see your username and avatar in the header above. Now let's start tracking some Base wallets!`
                   : "Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens."
                 }
               </p>
               <div className="text-xs text-muted-foreground/70">
-                • Add wallets to watch
-                <br />• Get real-time notifications
-                <br />• Track high-value transactions
-                {context?.user && (
+                {context?.user ? (
                   <>
-                    <br />• Your Farcaster ID: {context.user.fid}
+                    ✅ Connected as @{context.user.username || `FID: ${context.user.fid}`}
+                    <br />• Your profile avatar is displayed in the header
+                    <br />• Add wallets to watch (up to 3)
+                    <br />• Get real-time notifications
+                    <br />• Track high-value transactions
+                  </>
+                ) : (
+                  <>
+                    • Add wallets to watch
+                    <br />• Get real-time notifications
+                    <br />• Track high-value transactions
                   </>
                 )}
               </div>
