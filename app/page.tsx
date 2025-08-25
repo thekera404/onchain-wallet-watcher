@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { WalletTracker } from "@/components/wallet-tracker"
-import { ActivityFeed } from "@/components/activity-feed"
+import { EnhancedWalletTracker } from "@/components/enhanced-wallet-tracker"
+import { EnhancedActivityFeed } from "@/components/enhanced-activity-feed"
 import { NotificationSettings } from "@/components/notification-settings"
-import { Eye, Wallet, TrendingUp, Bell, Moon, Sun } from "lucide-react"
+import { Eye, Wallet, TrendingUp, Bell, Moon, Sun, Database } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
+import { loadDemoData, clearDemoData } from "@/lib/demo-data"
 
 export default function EtherDropsApp() {
   const [isReady, setIsReady] = useState(false)
@@ -115,25 +116,36 @@ export default function EtherDropsApp() {
                 <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl shadow-lg flex-shrink-0">
                   <Eye className="h-5 w-5 text-white" />
                 </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-lg font-bold text-card-foreground">Onchain Wallet Watcher</h1>
-                  <p className="text-sm text-muted-foreground">Track Base onchain activity</p>
-                </div>
-                <div className="sm:hidden">
-                  <h1 className="text-base font-bold text-card-foreground">Wallet Watcher</h1>
-                  <p className="text-xs text-muted-foreground">Base activity</p>
-                </div>
+                              <div className="hidden sm:block">
+                <h1 className="text-lg font-bold text-card-foreground">Onchain Wallet Watcher</h1>
+                <p className="text-sm text-muted-foreground">Track Base onchain activity</p>
               </div>
-              
-              {/* Theme Toggle */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="p-2 flex-shrink-0"
-              >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
+              <div className="sm:hidden">
+                <h1 className="text-base font-bold text-card-foreground">Wallet Watcher</h1>
+                <p className="text-xs text-muted-foreground">Base activity</p>
+              </div>
+            </div>
+            
+            {/* Demo Data Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadDemoData}
+              className="p-2 flex-shrink-0 text-green-600 hover:text-green-700"
+              title="Load Demo Data"
+            >
+              <Database className="h-4 w-4" />
+            </Button>
+            
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-2 flex-shrink-0"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             </div>
           </div>
         </nav>
@@ -202,9 +214,9 @@ export default function EtherDropsApp() {
                       <p className="text-sm font-medium text-card-foreground">
                         {context.user.username || `FID: ${context.user.fid}`}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {watchedWallets.length}/3 wallets
-                      </p>
+                                        <p className="text-xs text-muted-foreground">
+                    {watchedWallets.length}/5 wallets
+                  </p>
                     </div>
                   </div>
                   
@@ -311,7 +323,7 @@ export default function EtherDropsApp() {
                   <>
                     ✅ Connected as @{context.user.username || `FID: ${context.user.fid}`}
                     <br />• Your profile avatar is displayed in the header
-                    <br />• Add wallets to watch (up to 3)
+                    <br />• Add wallets to watch (up to 5)
                     <br />• Get real-time notifications
                     <br />• Track high-value transactions
                   </>
@@ -335,7 +347,7 @@ export default function EtherDropsApp() {
                 <Wallet className="h-4 w-4 text-blue-600" />
                 <div>
                   <p className="text-xs text-muted-foreground">Watching</p>
-                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}/3</p>
+                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}/5</p>
                 </div>
               </div>
             </CardContent>
@@ -426,16 +438,13 @@ export default function EtherDropsApp() {
           </TabsList>
 
           <TabsContent value="wallets" className="space-y-4">
-            <WalletTracker 
-              watchedWallets={watchedWallets} 
-              onAddWallet={addWallet} 
-              onRemoveWallet={removeWallet} 
+            <EnhancedWalletTracker 
               context={context} 
             />
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-4">
-            <ActivityFeed watchedWallets={watchedWallets} />
+            <EnhancedActivityFeed watchedWallets={watchedWallets} />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4">
