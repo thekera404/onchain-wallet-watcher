@@ -231,13 +231,13 @@ export function WalletTracker({
         </CardHeader>
         <CardContent className="space-y-3">
           {watchedWallets.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <Plus className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>Add your first wallet to start tracking</p>
             </div>
           ) : (
             watchedWallets.map((wallet) => (
-              <div key={wallet} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={wallet} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                 <div className="flex-1">
                   <p className="font-mono text-sm font-medium">{formatAddress(wallet)}</p>
                   <div className="flex items-center gap-2 mt-1">
@@ -292,7 +292,7 @@ export function WalletTracker({
             <div key={wallet.address} className="flex items-center justify-between p-2 border rounded-lg">
               <div>
                 <p className="font-medium text-sm">{wallet.name}</p>
-                <p className="font-mono text-xs text-gray-600">{formatAddress(wallet.address)}</p>
+                <p className="font-mono text-xs text-muted-foreground">{formatAddress(wallet.address)}</p>
               </div>
               <Button
                 variant="outline"

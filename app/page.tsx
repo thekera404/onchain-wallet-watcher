@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { WalletTracker } from "@/components/wallet-tracker"
 import { ActivityFeed } from "@/components/activity-feed"
 import { NotificationSettings } from "@/components/notification-settings"
-import { Eye, Wallet, TrendingUp, Bell } from "lucide-react"
+import { Eye, Wallet, TrendingUp, Bell, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useTheme } from "next-themes"
 
 export default function EtherDropsApp() {
   const [isReady, setIsReady] = useState(false)
@@ -15,6 +16,7 @@ export default function EtherDropsApp() {
   const [watchedWallets, setWatchedWallets] = useState<string[]>([])
   const [sdk, setSdk] = useState<any>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     // Initialize Farcaster SDK
@@ -83,19 +85,19 @@ export default function EtherDropsApp() {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading EtherDROPS Watcher...</p>
+          <p className="text-foreground">Loading Onchain Wallet Watcher...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-10 shadow-sm">
+      <div className="bg-card/90 backdrop-blur-md border-b border-border/50 sticky top-0 z-10 shadow-sm">
         <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -103,20 +105,30 @@ export default function EtherDropsApp() {
                 <Eye className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">Onchain Wallet Watcher</h1>
-                <p className="text-sm text-gray-600">Track Base onchain activity</p>
+                <h1 className="text-lg font-bold text-card-foreground">Onchain Wallet Watcher</h1>
+                <p className="text-sm text-muted-foreground">Track Base onchain activity</p>
               </div>
             </div>
-            {!context?.client?.added && (
+            <div className="flex items-center gap-2">
               <Button
-                onClick={promptAddApp}
+                variant="ghost"
                 size="sm"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="p-2"
               >
-                <Bell className="h-4 w-4 mr-1" />
-                Add App
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-            )}
+              {!context?.client?.added && (
+                <Button
+                  onClick={promptAddApp}
+                  size="sm"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                >
+                  <Bell className="h-4 w-4 mr-1" />
+                  Add App
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -127,13 +139,13 @@ export default function EtherDropsApp() {
         {watchedWallets.length === 0 && (
           <Card className="border-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Welcome to Onchain Wallet Watcher! 👋</CardTitle>
+              <CardTitle className="text-lg text-card-foreground">Welcome to Onchain Wallet Watcher!</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.
               </p>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-muted-foreground/70">
                 • Add wallets to watch
                 <br />• Get real-time notifications
                 <br />• Track high-value transactions
@@ -144,35 +156,35 @@ export default function EtherDropsApp() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm">
+          <Card className="border-0 bg-card/70 backdrop-blur-sm shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Wallet className="h-4 w-4 text-blue-600" />
                 <div>
-                  <p className="text-xs text-gray-600">Watching</p>
-                  <p className="text-lg font-bold">{watchedWallets.length}</p>
+                  <p className="text-xs text-muted-foreground">Watching</p>
+                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm">
+          <Card className="border-0 bg-card/70 backdrop-blur-sm shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-green-600" />
                 <div>
-                  <p className="text-xs text-gray-600">Active</p>
-                  <p className="text-lg font-bold">0</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                  <p className="text-lg font-bold text-card-foreground">0</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card className="border-0 bg-white/70 backdrop-blur-sm shadow-sm">
+          <Card className="border-0 bg-card/70 backdrop-blur-sm shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <Bell className="h-4 w-4 text-purple-600" />
                 <div>
-                  <p className="text-xs text-gray-600">Alerts</p>
-                  <p className="text-lg font-bold">{context?.client?.added ? "ON" : "OFF"}</p>
+                  <p className="text-xs text-muted-foreground">Alerts</p>
+                  <p className="text-lg font-bold text-card-foreground">{context?.client?.added ? "ON" : "OFF"}</p>
                 </div>
               </div>
             </CardContent>
@@ -181,7 +193,7 @@ export default function EtherDropsApp() {
 
         {/* Tabs */}
         <Tabs defaultValue="wallets" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-white/70 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-3 bg-card/70 backdrop-blur-sm">
             <TabsTrigger value="wallets">Wallets</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>

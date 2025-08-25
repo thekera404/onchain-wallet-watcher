@@ -277,7 +277,7 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
                   </div>
                 )}
                 <div className="flex items-center gap-1 mt-1">
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-muted-foreground">
                     Monitoring {watchedWallets.length} wallet{watchedWallets.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -292,25 +292,25 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
 
       {watchedWallets.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-gray-500">
-            <ArrowUpRight className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>Add wallets to see their activity</p>
-          </CardContent>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+          <ArrowUpRight className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p>Add wallets to see their activity</p>
+        </CardContent>
         </Card>
       ) : isLoading ? (
         <Card>
           <CardContent className="py-8 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-600">Loading activity...</p>
+            <p className="text-muted-foreground">Loading activity...</p>
           </CardContent>
         </Card>
       ) : allTransactions.length === 0 ? (
         <Card>
-          <CardContent className="py-8 text-center text-gray-500">
-            <ArrowUpRight className="h-8 w-8 mx-auto mb-2 opacity-50" />
-            <p>No recent activity found</p>
-            <p className="text-sm mt-1">Transactions will appear here when detected</p>
-          </CardContent>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+          <ArrowUpRight className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p>No recent activity found</p>
+          <p className="text-sm mt-1">Transactions will appear here when detected</p>
+        </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -325,7 +325,7 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
                     <div>
                       <div className="flex items-center gap-2">
                         <Badge className={getTransactionColor(tx.type)}>{tx.type.toUpperCase()}</Badge>
-                        <span className="font-mono text-sm text-gray-600">{tx.wallet}</span>
+                        <span className="font-mono text-sm text-muted-foreground">{tx.wallet}</span>
                         {realTimeUpdates.some(rt => rt.id === tx.id) && (
                           <Badge className="bg-green-100 text-green-800 text-xs">NEW</Badge>
                         )}
@@ -333,7 +333,7 @@ export function ActivityFeed({ watchedWallets, context }: ActivityFeedProps) {
                       <p className="font-medium">
                         {tx.amount} {tx.token}{formatUsdValue(tx.usdValue)}
                       </p>
-                      <p className="text-sm text-gray-500">{formatTimeAgo(tx.timestamp)}</p>
+                      <p className="text-sm text-muted-foreground">{formatTimeAgo(tx.timestamp)}</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => openTransaction(tx.hash)}>

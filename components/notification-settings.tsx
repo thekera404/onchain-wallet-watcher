@@ -66,7 +66,7 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
     <div className="space-y-4">
       {/* User Info */}
       {context?.user && (
-        <Card className="border-0 bg-white/70 backdrop-blur-sm">
+        <Card className="border-0 bg-card/70 backdrop-blur-sm">
           {" "}
           {/* Added glassmorphism styling */}
           <CardHeader>
@@ -81,8 +81,8 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
                 <img src={context.user.pfpUrl || "/placeholder.svg"} alt="Profile" className="w-12 h-12 rounded-full" />
               )}
               <div>
-                <p className="font-medium">{context.user.displayName || context.user.username}</p>
-                <p className="text-sm text-gray-600">FID: {context.user.fid}</p>
+                <p className="font-medium text-card-foreground">{context.user.displayName || context.user.username}</p>
+                <p className="text-sm text-muted-foreground">FID: {context.user.fid}</p>
               </div>
             </div>
           </CardContent>
@@ -90,7 +90,7 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
       )}
 
       {/* App Status */}
-      <Card className="border-0 bg-white/70 backdrop-blur-sm">
+      <Card className="border-0 bg-card/70 backdrop-blur-sm">
         {" "}
         {/* Added glassmorphism styling */}
         <CardHeader>
@@ -103,8 +103,8 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">App Added</p>
-              <p className="text-sm text-gray-600">Required for notifications</p>
+              <p className="font-medium text-card-foreground">App Added</p>
+              <p className="text-sm text-muted-foreground">Required for notifications</p>
             </div>
             <Badge variant={context?.client?.added ? "default" : "secondary"}>
               {context?.client?.added ? "Added" : "Not Added"}
@@ -126,7 +126,7 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
       </Card>
 
       {/* Notification Settings */}
-      <Card className="border-0 bg-white/70 backdrop-blur-sm">
+      <Card className="border-0 bg-card/70 backdrop-blur-sm">
         {" "}
         {/* Added glassmorphism styling */}
         <CardHeader>
@@ -139,8 +139,8 @@ export function NotificationSettings({ context, sdk }: NotificationSettingsProps
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">Push Notifications</p>
-              <p className="text-sm text-gray-600">Mints, transfers, and swaps</p>
+              <p className="font-medium text-card-foreground">Push Notifications</p>
+              <p className="text-sm text-muted-foreground">Mints, transfers, and swaps</p>
             </div>
             <Switch
               checked={notificationsEnabled}
