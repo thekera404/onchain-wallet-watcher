@@ -67,8 +67,25 @@ export default function HomePage() {
   } = useAppStore()
 
   useEffect(() => {
-    initializeFarcasterMiniApp()
-    
+    const initializeApp = async () => {
+      try {
+        console.log("[v0] Initializing Farcaster SDK...")
+        
+        // Import and call ready() first - this is critical
+        const { sdk } = await import('@farcaster/miniapp-sdk')
+        await sdk.actions.ready()
+        console.log("[v0] Farcaster SDK ready")
+        
+        // Now initialize the mini app
+        await initializeFarcasterMiniApp()
+        
+      } catch (error) {
+        console.error("[v0] Failed to initialize Farcaster SDK:", error)
+        // Still set loading to false even if SDK fails
+        setIsLoading(false)
+      }
+    }
+
     // Clear any existing demo wallets on first load
     const demoAddresses = [
       "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
@@ -88,6 +105,8 @@ export default function HomePage() {
         }
       })
     }
+
+    initializeApp()
   }, [])
 
   const initializeFarcasterMiniApp = async () => {
@@ -117,9 +136,6 @@ export default function HomePage() {
         
         // Context listeners may not be available in all SDK versions
         console.log('SDK context available:', !!context)
-
-        // IMPORTANT: Call ready() to hide splash screen
-        await sdk.actions.ready()
         
         console.log("[v0] Farcaster Mini App SDK initialized", context)
       } catch (sdkError) {
