@@ -124,8 +124,8 @@ export default function HomePage() {
           },
           body: JSON.stringify({
             wallets: addresses,
-            userId: farcasterContext.user.fid?.toString(),
-            fid: farcasterContext.user.fid
+            userId: farcasterContext.user?.fid?.toString(),
+            fid: farcasterContext.user?.fid
           }),
         })
 
@@ -701,7 +701,7 @@ export default function HomePage() {
                                 {tx.type || 'Transaction'}
                               </p>
                               <Badge variant="outline" className="text-xs">
-                                {tx.chain || 'Base'}
+                                {(tx as any).chain || 'Base'}
                               </Badge>
                               {Date.now() - new Date(tx.timestamp || 0).getTime() < 60000 && (
                                 <Badge className="text-xs bg-green-500">
@@ -723,9 +723,9 @@ export default function HomePage() {
                               parseFloat(tx.value) > 0 ? `${parseFloat(tx.value).toFixed(4)} ETH` : 'Contract'
                             ) : 'N/A'}
                           </p>
-                          {tx.usdValue && (
+                          {(tx as any).usdValue && (
                             <p className="text-xs text-green-600">
-                              ${tx.usdValue.toLocaleString()}
+                              ${(tx as any).usdValue.toLocaleString()}
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground">
