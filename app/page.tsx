@@ -29,20 +29,16 @@ import { loadDemoData, clearDemoData } from '@/lib/demo-data'
 
 // Farcaster Mini App types
 
-// Traditional Farcaster Mini App types
-interface FarcasterUser {
-  fid: number
-  username: string
-  displayName: string
-  pfp: string
-  verified: boolean
-}
-
+// Simplified Farcaster context types
 interface FarcasterContext {
-  user: FarcasterUser | null
+  user: {
+    fid?: number
+    username?: string
+    displayName?: string
+    pfpUrl?: string
+  } | null
   client: {
     added: boolean
-    verified: boolean
   }
 }
 
@@ -56,7 +52,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [farcasterContext, setFarcasterContext] = useState<FarcasterContext>({
     user: null,
-    client: { added: false, verified: false }
+    client: { added: false }
   })
   const [actionResult, setActionResult] = useState<string | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
@@ -96,21 +92,11 @@ export default function HomePage() {
         const context = await sdk.context
         setFarcasterContext({
           user: context.user,
-          client: { added: context.client.added, verified: context.client.verified }
+          client: { added: context.client.added }
         })
         
-        // Listen for context changes
-        sdk.on('context', (newContext: any) => {
-          setFarcasterContext({
-            user: newContext.user,
-            client: { added: newContext.client.added, verified: newContext.client.verified }
-          })
-        })
-
-        // Listen for actions
-        sdk.on('action', (action: FarcasterAction) => {
-          handleFarcasterAction(action)
-        })
+        // Context listeners may not be available in all SDK versions
+        console.log('SDK context available:', !!context)
 
         // IMPORTANT: Call ready() to hide splash screen
         await sdk.actions.ready()
@@ -169,11 +155,10 @@ export default function HomePage() {
 
     // Add wallet to store
     addWatchedWallet({
-      id: Date.now().toString(),
       address,
       label: `Wallet ${watchedWallets.length + 1}`,
       chain: 'base',
-      addedAt: new Date().toISOString(),
+      isActive: true,
       filters: {
         minValue: '0.01',
         trackNFTs: true,
@@ -184,16 +169,8 @@ export default function HomePage() {
       }
     })
 
-    // Send Farcaster action if available
-    try {
-      const { sdk } = await import('@farcaster/miniapp-sdk')
-      await sdk.actions.sendAction({
-        type: 'WALLET_ADDED',
-        payload: { address }
-      })
-    } catch (error) {
-      console.warn('Failed to send Farcaster action:', error)
-    }
+    // Log action for debugging (sendAction not available in current SDK)
+    console.log('Wallet added:', { address })
 
     setActionResult(`Wallet ${address} added successfully!`)
     setTimeout(() => setActionResult(null), 3000)
@@ -203,16 +180,8 @@ export default function HomePage() {
   const removeWallet = async (address: string) => {
     removeWatchedWallet(address)
     
-    // Send Farcaster action if available
-    try {
-      const { sdk } = await import('@farcaster/miniapp-sdk')
-      await sdk.actions.sendAction({
-        type: 'WALLET_REMOVED',
-        payload: { address }
-      })
-    } catch (error) {
-      console.warn('Failed to send Farcaster action:', error)
-    }
+    // Log action for debugging (sendAction not available in current SDK)
+    console.log('Wallet removed:', { address })
 
     setActionResult(`Wallet ${address} removed successfully!`)
     setTimeout(() => setActionResult(null), 3000)
@@ -273,7 +242,7 @@ export default function HomePage() {
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-lg border border-green-500/20">
                   <CheckCircle className="h-4 w-4 text-green-500" />
                   <span className="text-xs text-green-600 font-medium">
-                    @{farcasterContext.user.username}
+                    @{farcasterContext.user?.username || 'Unknown'}
                   </span>
                 </div>
               )}
@@ -364,10 +333,10 @@ export default function HomePage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground mb-4">
-                Great! You're connected as @{farcasterContext.user.username}. You can now receive real-time notifications!
+                Great! You're connected as @{farcasterContext.user?.username || 'Unknown'}. You can now receive real-time notifications!
               </p>
               <div className="text-xs text-muted-foreground/70 space-y-1">
-                <p>✅ Connected as @{farcasterContext.user.username}</p>
+                <p>✅ Connected as @{farcasterContext.user?.username || 'Unknown'}</p>
                 <p>• Your profile is verified</p>
                 <p>• Add wallets to watch (up to 5)</p>
                 <p>• Get real-time notifications</p>
@@ -595,21 +564,23 @@ export default function HomePage() {
                 {farcasterContext.user && (
                   <div className="p-3 bg-card/50 rounded-lg">
                     <div className="flex items-center gap-3 mb-3">
-                      <img
-                        src={farcasterContext.user.pfp}
-                        alt={farcasterContext.user.username}
-                        className="w-10 h-10 rounded-full"
-                      />
+                      {farcasterContext.user?.pfpUrl && (
+                        <img
+                          src={farcasterContext.user.pfpUrl}
+                          alt={farcasterContext.user?.username || 'User'}
+                          className="w-10 h-10 rounded-full"
+                        />
+                      )}
                       <div>
-                        <p className="font-medium">@{farcasterContext.user.username}</p>
+                        <p className="font-medium">@{farcasterContext.user?.username || 'Unknown'}</p>
                         <p className="text-sm text-muted-foreground">
-                          FID: {farcasterContext.user.fid}
+                          FID: {farcasterContext.user?.fid || 'N/A'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="text-xs">
-                        {farcasterContext.user.verified ? "Verified" : "Unverified"}
+                        Connected
                       </Badge>
                       <Badge variant="outline" className="text-xs">
                         {farcasterContext.client.added ? "App Added" : "App Not Added"}
