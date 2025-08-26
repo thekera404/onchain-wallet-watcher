@@ -1,0 +1,34 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0a0b2b"/>
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#9333ea"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background gradient overlay -->
+  <rect width="1200" height="630" fill="url(#bg-gradient)" opacity="0.1"/>
+  
+  <!-- Main icon -->
+  <circle cx="600" cy="315" r="80" fill="url(#bg-gradient)" opacity="0.2"/>
+  <circle cx="600" cy="315" r="50" fill="white" opacity="0.1"/>
+  <path d="M600 265c27.61 0 50 22.39 50 50s-22.39 50-50 50-50-22.39-50-50 22.39-50 50-50zm0 20c-16.57 0-30 13.43-30 30s13.43 30 30 30 30-13.43 30-30-13.43-30-30-30z" fill="white"/>
+  <path d="M600 295c11.05 0 20 8.95 20 20s-8.95 20-20 20-20-8.95-20-20 8.95-20 20-20z" fill="white"/>
+  
+  <!-- Title -->
+  <text x="600" y="420" text-anchor="middle" fill="white" font-family="system-ui" font-size="48" font-weight="bold">
+    Onchain Wallet Watcher
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="460" text-anchor="middle" fill="white" font-family="system-ui" font-size="24" opacity="0.7">
+    Track Base wallets & get real-time notifications
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="150" cy="150" r="3" fill="white" opacity="0.3"/>
+  <circle cx="1050" cy="150" r="3" fill="white" opacity="0.3"/>
+  <circle cx="150" cy="480" r="3" fill="white" opacity="0.3"/>
+  <circle cx="1050" cy="480" r="3" fill="white" opacity="0.3"/>
+</svg>

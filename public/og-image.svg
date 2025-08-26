@@ -1,0 +1,42 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0a0b2b"/>
+  <defs>
+    <linearGradient id="og-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563eb"/>
+      <stop offset="100%" style="stop-color:#9333ea"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background gradient overlay -->
+  <rect width="1200" height="630" fill="url(#og-gradient)" opacity="0.15"/>
+  
+  <!-- Main content area -->
+  <rect x="100" y="100" width="1000" height="430" rx="20" fill="white" opacity="0.05"/>
+  
+  <!-- Icon -->
+  <circle cx="300" cy="315" r="60" fill="url(#og-gradient)" opacity="0.3"/>
+  <circle cx="300" cy="315" r="35" fill="white" opacity="0.1"/>
+  <path d="M300 280c19.33 0 35 15.67 35 35s-15.67 35-35 35-35-15.67-35-35 15.67-35 35-35zm0 15c-11.05 0-20 8.95-20 20s8.95 20 20 20 20-8.95 20-20-8.95-20-20-20z" fill="white"/>
+  <path d="M300 305c5.52 0 10 4.48 10 10s-4.48 10-10 10-10-4.48-10-10 4.48-10 10-10z" fill="white"/>
+  
+  <!-- Title -->
+  <text x="420" y="290" fill="white" font-family="system-ui" font-size="42" font-weight="bold">
+    Onchain Wallet Watcher
+  </text>
+  
+  <!-- Description -->
+  <text x="420" y="330" fill="white" font-family="system-ui" font-size="20" opacity="0.8">
+    Track your favorite Base wallets in real-time
+  </text>
+  
+  <!-- Features -->
+  <text x="420" y="370" fill="white" font-family="system-ui" font-size="16" opacity="0.6">
+    • Get notifications for mints, transfers, and swaps
+  </text>
+  <text x="420" y="395" fill="white" font-family="system-ui" font-size="16" opacity="0.6">
+    • Monitor up to 5 wallets simultaneously
+  </text>
+  <text x="420" y="420" fill="white" font-family="system-ui" font-size="16" opacity="0.6">
+    • Powered by Base blockchain
+  </text>
+</svg>

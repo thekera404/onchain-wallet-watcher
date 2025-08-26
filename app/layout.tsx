@@ -9,15 +9,15 @@ import "./globals.css"
 // Frame metadata (used for Farcaster frames)
 const frameMetadata = {
   version: "1",
-  imageUrl: "https://onchain-wallet-watcher.vercel.app/splash.png",
+  imageUrl: "https://onchain-wallet-watcher.vercel.app/splash.svg",
   splashBackgroundColor: "#0a0b2b",
   button: {
     title: "Start Watching",
     action: {
       type: "launch_frame",
-      name: "Onchain Wallet Watche",
+      name: "Onchain Wallet Watcher",
       url: "https://onchain-wallet-watcher.vercel.app/",
-      splashImageUrl: "https://onchain-wallet-watcher.vercel.app/splash.png", // wide splash image
+      splashImageUrl: "https://onchain-wallet-watcher.vercel.app/splash.svg", // wide splash image
       splashBackgroundColor: "#0a0b2b",
     },
   },
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
       "Track your favorite Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
     images: [
       {
-        url: "https://onchain-wallet-watcher.vercel.app/og-image.png",
+        url: "https://onchain-wallet-watcher.vercel.app/og-image.svg",
         width: 1200,
         height: 630,
         alt: "Onchain Wallet Watcher Preview",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
   },
   other: {
     "fc:frame": JSON.stringify(frameMetadata),
-    "og:image": "https://onchain-wallet-watcher.vercel.app/og-image.png",
+    "og:image": "https://onchain-wallet-watcher.vercel.app/og-image.svg",
     "og:title": "Onchain Wallet Watcher",
     "og:description":
       "Track your favorite Base wallets in real-time. Get notifications for mints, transfers, and swaps.",
