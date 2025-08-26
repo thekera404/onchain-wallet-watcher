@@ -16,7 +16,6 @@ import {
   Moon, 
   Plus, 
   X, 
-  Database,
   ExternalLink,
   CheckCircle,
   AlertCircle,
@@ -25,7 +24,7 @@ import {
   Settings
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { loadDemoData, clearDemoData } from '@/lib/demo-data'
+
 
 // Farcaster Mini App types
 
@@ -130,10 +129,7 @@ export default function HomePage() {
           setActionResult(`Wallet ${action.payload.address} removed successfully!`)
         }
         break
-      case 'LOAD_DEMO':
-        loadDemoData()
-        setActionResult('Demo data loaded successfully!')
-        break
+
       default:
         console.log("Unknown action type:", action.type)
     }
@@ -247,16 +243,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Demo Data Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadDemoData}
-                className="p-2 flex-shrink-0 text-green-600 hover:text-green-700"
-                title="Load Demo Data"
-              >
-                <Database className="h-4 w-4" />
-              </Button>
+
 
               {/* Theme Toggle */}
               <Button
@@ -318,7 +305,7 @@ export default function HomePage() {
               <div className="text-xs text-muted-foreground/70 space-y-1">
                 <p>• Add wallets to watch (up to 5)</p>
                 <p>• Track high-value transactions</p>
-                <p>• Use demo data for testing</p>
+
                 <p>⚠️ Connect to Farcaster for notifications</p>
               </div>
             </CardContent>
@@ -608,14 +595,7 @@ export default function HomePage() {
                     </Button>
                   )}
                   
-                  <Button
-                    variant="outline"
-                    onClick={loadDemoData}
-                    className="w-full"
-                  >
-                    <Database className="h-4 w-4 mr-2" />
-                    Load Demo Data
-                  </Button>
+
                 </div>
               </CardContent>
             </Card>
