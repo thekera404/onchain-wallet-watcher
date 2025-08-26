@@ -117,30 +117,55 @@ export default function HomePage() {
     const pollTransactions = async () => {
       try {
         const addresses = watchedWallets.map(w => w.address)
-        const response = await fetch('/api/check-new-transactions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            wallets: addresses,
-            userId: farcasterContext.user?.fid?.toString(),
-            fid: farcasterContext.user?.fid
-          }),
-        })
+        console.log('🔍 Polling transactions for:', addresses)
 
-        if (response.ok) {
-          const data = await response.json()
-          
-          // Add new transactions to the store
-          if (data.transactions && data.transactions.length > 0) {
-            data.transactions.forEach((tx: any) => {
-              // Only add if not already in store
-              if (!transactions.some(existing => existing.hash === tx.hash)) {
-                addTransaction(tx)
-                console.log('📊 New transaction detected:', tx.hash)
-              }
+        // First try to get wallet activity for each wallet
+        for (const address of addresses) {
+          try {
+            const response = await fetch('/api/get-wallet-activity', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                address,
+                limit: 10
+              }),
             })
+
+            if (response.ok) {
+              const data = await response.json()
+              console.log(`📊 Found ${data.transactions?.length || 0} transactions for ${address}`)
+              
+              // Add new transactions to the store
+              if (data.transactions && data.transactions.length > 0) {
+                data.transactions.forEach((tx: any) => {
+                  // Only add if not already in store
+                  if (!transactions.some(existing => existing.hash === tx.hash)) {
+                    // Format transaction for our store
+                    const formattedTx = {
+                      hash: tx.hash,
+                      fromAddress: tx.from || tx.fromAddress,
+                      toAddress: tx.to || tx.toAddress,
+                      value: tx.value,
+                      type: tx.type || 'transaction',
+                      timestamp: tx.timestamp || new Date(),
+                      walletId: address,
+                      chain: 'base',
+                      blockNumber: tx.blockNumber,
+                      gasUsed: tx.gasUsed,
+                      gasPrice: tx.gasPrice
+                    }
+                    addTransaction(formattedTx)
+                    console.log('✅ New transaction added:', tx.hash)
+                  }
+                })
+              }
+            } else {
+              console.error(`Failed to get activity for ${address}:`, await response.text())
+            }
+          } catch (error) {
+            console.error(`Error fetching activity for ${address}:`, error)
           }
         }
       } catch (error) {
@@ -345,20 +370,24 @@ export default function HomePage() {
 
   const registerForNotifications = async (user: any) => {
     try {
-      // Register this user for notifications
+      // Register notification token for this user
+      const notificationToken = `user-${user.fid}-${Date.now()}`
+      const notificationUrl = `${window.location.origin}/api/send-notification`
+      
+      // Register via webhook endpoint
       const response = await fetch('/api/webhook', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type: 'miniapp_add',
+          type: 'notifications_enabled',
           data: {
             fid: user.fid,
             username: user.username,
             notificationDetails: {
-              url: `${window.location.origin}/api/send-notification`,
-              token: `user-${user.fid}-${Date.now()}`
+              url: notificationUrl,
+              token: notificationToken
             }
           }
         }),
@@ -367,6 +396,15 @@ export default function HomePage() {
       if (response.ok) {
         console.log('✅ Registered for notifications:', user.username)
         setActionResult(`Notifications enabled for @${user.username}`)
+        
+        // Also start monitoring existing wallets
+        if (watchedWallets.length > 0) {
+          for (const wallet of watchedWallets) {
+            await startWalletMonitoring(wallet.address)
+          }
+        }
+      } else {
+        console.error('Failed to register notifications:', await response.text())
       }
     } catch (error) {
       console.error('Error registering for notifications:', error)
@@ -665,16 +703,69 @@ export default function HomePage() {
             {/* Activity Header */}
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">Transaction Activity</h3>
-              {transactions.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearTransactions}
-                  className="text-muted-foreground"
-                >
-                  Clear All
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {/* Debug Info */}
+                <Badge variant="outline" className="text-xs">
+                  {watchedWallets.length} wallets • {transactions.length} txs
+                </Badge>
+                {transactions.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearTransactions}
+                    className="text-muted-foreground"
+                  >
+                    Clear All
+                  </Button>
+                )}
+                {farcasterContext.user && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        // Test transaction loading
+                        if (watchedWallets.length > 0) {
+                          const address = watchedWallets[0].address
+                          try {
+                            const response = await fetch('/api/test-transactions', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ address })
+                            })
+                            const data = await response.json()
+                            console.log('Test transactions:', data)
+                            if (data.transactions) {
+                              data.transactions.forEach((tx: any) => {
+                                if (!transactions.some(existing => existing.hash === tx.hash)) {
+                                  addTransaction(tx)
+                                }
+                              })
+                              setActionResult(`Added ${data.transactions.length} test transactions`)
+                            }
+                          } catch (error) {
+                            console.error('Test failed:', error)
+                          }
+                        }
+                      }}
+                      className="text-blue-600"
+                    >
+                      Test
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        // Manual refresh
+                        window.location.reload()
+                      }}
+                      className="text-muted-foreground"
+                    >
+                      Refresh
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Transactions List */}

@@ -7,11 +7,41 @@ const notificationTokens = new Map<string, { token: string; url: string }>()
 export async function POST(request: NextRequest) {
   try {
     const requestJson = await request.json()
+    
+    // Check if this is a manual registration (has 'type' field) or official Farcaster webhook
+    if (requestJson.type) {
+      // Handle manual registration
+      console.log("[v0] Manual registration event:", requestJson.type)
+      const { type, data } = requestJson
+      
+      switch (type) {
+        case "notifications_enabled":
+          console.log("[v0] Manual notifications enabled for FID:", data.fid)
+          if (data.notificationDetails) {
+            notificationTokens.set(data.fid.toString(), {
+              token: data.notificationDetails.token,
+              url: data.notificationDetails.url,
+            })
+            console.log("[v0] Notification token saved for FID:", data.fid)
+          }
+          break
+        case "miniapp_add":
+          console.log("[v0] Manual mini app add for FID:", data.fid)
+          if (data.notificationDetails) {
+            notificationTokens.set(data.fid.toString(), {
+              token: data.notificationDetails.token,
+              url: data.notificationDetails.url,
+            })
+          }
+          break
+      }
+      
+      return NextResponse.json({ success: true })
+    }
 
-    // Verify the webhook event
+    // Handle official Farcaster webhook events
     const data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar)
-
-    console.log("[v0] EtherDROPS webhook event received:", data.event)
+    console.log("[v0] Official Farcaster webhook event received:", data.event)
 
     switch (data.event) {
       case "miniapp_added":
