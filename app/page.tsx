@@ -62,11 +62,32 @@ export default function HomePage() {
     transactions, 
     addWatchedWallet, 
     removeWatchedWallet, 
-    clearTransactions 
+    clearTransactions,
+    clearAllWallets 
   } = useAppStore()
 
   useEffect(() => {
     initializeFarcasterMiniApp()
+    
+    // Clear any existing demo wallets on first load
+    const demoAddresses = [
+      "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
+      "0x8ba1f109551bD432803012645Hac136c772c3c2b"
+    ]
+    
+    const hasDemoWallets = watchedWallets.some(wallet => 
+      demoAddresses.includes(wallet.address)
+    )
+    
+    if (hasDemoWallets) {
+      console.log('Removing demo wallets...')
+      demoAddresses.forEach(address => {
+        const demoWallet = watchedWallets.find(w => w.address === address)
+        if (demoWallet) {
+          removeWatchedWallet(demoWallet.id)
+        }
+      })
+    }
   }, [])
 
   const initializeFarcasterMiniApp = async () => {

@@ -59,6 +59,7 @@ interface AppState {
   transactions: Transaction[]
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void
   clearTransactions: () => void
+  clearAllWallets: () => void
   
   // Notification state
   notificationTokens: Map<string, { token: string; url: string }>
@@ -121,6 +122,7 @@ export const useAppStore = create<AppState>()(
       },
       
       clearTransactions: () => set({ transactions: [] }),
+      clearAllWallets: () => set({ watchedWallets: [] }),
       
       // Notification actions
       addNotificationToken: (fid, token, url) => {
