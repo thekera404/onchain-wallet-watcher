@@ -63,7 +63,8 @@ export default function HomePage() {
     addWatchedWallet, 
     removeWatchedWallet, 
     clearTransactions,
-    clearAllWallets 
+    clearAllWallets,
+    addTransaction 
   } = useAppStore()
 
   useEffect(() => {
@@ -109,6 +110,53 @@ export default function HomePage() {
     initializeApp()
   }, [])
 
+  // Real-time transaction monitoring
+  useEffect(() => {
+    if (!farcasterContext.user || watchedWallets.length === 0) return
+
+    const pollTransactions = async () => {
+      try {
+        const addresses = watchedWallets.map(w => w.address)
+        const response = await fetch('/api/check-new-transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            wallets: addresses,
+            userId: farcasterContext.user.fid?.toString(),
+            fid: farcasterContext.user.fid
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          
+          // Add new transactions to the store
+          if (data.transactions && data.transactions.length > 0) {
+            data.transactions.forEach((tx: any) => {
+              // Only add if not already in store
+              if (!transactions.some(existing => existing.hash === tx.hash)) {
+                addTransaction(tx)
+                console.log('📊 New transaction detected:', tx.hash)
+              }
+            })
+          }
+        }
+      } catch (error) {
+        console.error('Error polling transactions:', error)
+      }
+    }
+
+    // Poll every 30 seconds for new transactions
+    const interval = setInterval(pollTransactions, 30000)
+    
+    // Initial poll
+    pollTransactions()
+
+    return () => clearInterval(interval)
+  }, [farcasterContext.user, watchedWallets.length])
+
   const initializeFarcasterMiniApp = async () => {
     try {
       // Check if we're in a Farcaster environment
@@ -133,6 +181,11 @@ export default function HomePage() {
           user: context.user,
           client: { added: context.client.added }
         })
+        
+        // Register for notifications if user is connected
+        if (context.user) {
+          await registerForNotifications(context.user)
+        }
         
         // Context listeners may not be available in all SDK versions
         console.log('SDK context available:', !!context)
@@ -202,22 +255,112 @@ export default function HomePage() {
       }
     })
 
-    // Log action for debugging (sendAction not available in current SDK)
-    console.log('Wallet added:', { address })
+    // Start monitoring this wallet for real-time transactions
+    await startWalletMonitoring(address)
 
     setActionResult(`Wallet ${address} added successfully!`)
     setTimeout(() => setActionResult(null), 3000)
     return true
   }
 
+  const startWalletMonitoring = async (address: string) => {
+    try {
+      if (!farcasterContext.user) {
+        console.warn('Cannot start monitoring: No Farcaster user connected')
+        return
+      }
+
+      const response = await fetch('/api/monitor-wallets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'add',
+          address,
+          userId: farcasterContext.user.fid?.toString() || 'anonymous',
+          fid: farcasterContext.user.fid
+        }),
+      })
+
+      if (response.ok) {
+        console.log(`✅ Started monitoring wallet: ${address}`)
+        setActionResult(`Monitoring enabled for ${address.slice(0, 6)}...${address.slice(-4)}`)
+      } else {
+        console.error('Failed to start monitoring:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error starting wallet monitoring:', error)
+    }
+  }
+
+  const stopWalletMonitoring = async (address: string) => {
+    try {
+      if (!farcasterContext.user) {
+        console.warn('Cannot stop monitoring: No Farcaster user connected')
+        return
+      }
+
+      const response = await fetch('/api/monitor-wallets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'remove',
+          address,
+          userId: farcasterContext.user.fid?.toString() || 'anonymous'
+        }),
+      })
+
+      if (response.ok) {
+        console.log(`🛑 Stopped monitoring wallet: ${address}`)
+      } else {
+        console.error('Failed to stop monitoring:', await response.text())
+      }
+    } catch (error) {
+      console.error('Error stopping wallet monitoring:', error)
+    }
+  }
+
   const removeWallet = async (address: string) => {
     removeWatchedWallet(address)
     
-    // Log action for debugging (sendAction not available in current SDK)
-    console.log('Wallet removed:', { address })
+    // Stop monitoring this wallet
+    await stopWalletMonitoring(address)
 
     setActionResult(`Wallet ${address} removed successfully!`)
     setTimeout(() => setActionResult(null), 3000)
+  }
+
+  const registerForNotifications = async (user: any) => {
+    try {
+      // Register this user for notifications
+      const response = await fetch('/api/webhook', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'miniapp_add',
+          data: {
+            fid: user.fid,
+            username: user.username,
+            notificationDetails: {
+              url: `${window.location.origin}/api/send-notification`,
+              token: `user-${user.fid}-${Date.now()}`
+            }
+          }
+        }),
+      })
+
+      if (response.ok) {
+        console.log('✅ Registered for notifications:', user.username)
+        setActionResult(`Notifications enabled for @${user.username}`)
+      }
+    } catch (error) {
+      console.error('Error registering for notifications:', error)
+    }
   }
 
   const promptAddApp = async () => {
@@ -447,6 +590,8 @@ export default function HomePage() {
                     placeholder="Enter wallet address (0x...)"
                     className="flex-1"
                     required
+                    pattern="^0x[a-fA-F0-9]{40}$"
+                    title="Please enter a valid Ethereum address starting with 0x"
                   />
                   <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600">
                     <Plus className="h-4 w-4 mr-1" />
@@ -535,28 +680,56 @@ export default function HomePage() {
                 </Card>
               ) : (
                 transactions.slice(0, 20).map((tx, index) => (
-                  <Card key={index} className="border-0 bg-card/70 backdrop-blur-sm">
+                  <Card key={tx.id || index} className="border-0 bg-card/70 backdrop-blur-sm">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                            <Zap className="h-4 w-4 text-white" />
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            tx.type === 'transfer' ? 'bg-gradient-to-r from-blue-500 to-purple-500' :
+                            tx.type === 'swap' ? 'bg-gradient-to-r from-green-500 to-blue-500' :
+                            tx.type === 'mint' ? 'bg-gradient-to-r from-purple-500 to-pink-500' :
+                            'bg-gradient-to-r from-gray-500 to-gray-600'
+                          }`}>
+                            {tx.type === 'transfer' ? <Zap className="h-4 w-4 text-white" /> :
+                             tx.type === 'swap' ? <TrendingUp className="h-4 w-4 text-white" /> :
+                             tx.type === 'mint' ? <Plus className="h-4 w-4 text-white" /> :
+                             <Activity className="h-4 w-4 text-white" />}
                           </div>
                           <div>
-                            <p className="font-medium text-card-foreground">
-                              {tx.type || 'Transaction'}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-card-foreground capitalize">
+                                {tx.type || 'Transaction'}
+                              </p>
+                              <Badge variant="outline" className="text-xs">
+                                {tx.chain || 'Base'}
+                              </Badge>
+                              {Date.now() - new Date(tx.timestamp || 0).getTime() < 60000 && (
+                                <Badge className="text-xs bg-green-500">
+                                  New
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground font-mono">
-                              {tx.hash?.slice(0, 6)}...{tx.hash?.slice(-4) || 'N/A'}
+                              {tx.hash?.slice(0, 8)}...{tx.hash?.slice(-6) || 'N/A'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString() : 'Unknown time'}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-card-foreground">
-                            {tx.value ? `${tx.value} ETH` : 'N/A'}
+                            {tx.value ? (
+                              parseFloat(tx.value) > 0 ? `${parseFloat(tx.value).toFixed(4)} ETH` : 'Contract'
+                            ) : 'N/A'}
                           </p>
+                          {tx.usdValue && (
+                            <p className="text-xs text-green-600">
+                              ${tx.usdValue.toLocaleString()}
+                            </p>
+                          )}
                           <p className="text-xs text-muted-foreground">
-                            Base
+                            Block #{tx.blockNumber || 'N/A'}
                           </p>
                         </div>
                       </div>
