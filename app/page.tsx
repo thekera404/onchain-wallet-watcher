@@ -323,13 +323,23 @@ export default function HomePage() {
     }
   }
 
-  const removeWallet = async (address: string) => {
-    removeWatchedWallet(address)
+  const removeWallet = async (walletId: string, address?: string) => {
+    // Find the wallet to get the address if not provided
+    const wallet = watchedWallets.find(w => w.id === walletId)
+    const walletAddress = address || wallet?.address
     
-    // Stop monitoring this wallet
-    await stopWalletMonitoring(address)
+    if (!walletAddress) {
+      console.error('Cannot remove wallet: address not found')
+      return
+    }
+    
+    // Remove from store (uses wallet ID)
+    removeWatchedWallet(walletId)
+    
+    // Stop monitoring this wallet (uses address)
+    await stopWalletMonitoring(walletAddress)
 
-    setActionResult(`Wallet ${address} removed successfully!`)
+    setActionResult(`Wallet ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)} removed successfully!`)
     setTimeout(() => setActionResult(null), 3000)
   }
 
@@ -636,8 +646,9 @@ export default function HomePage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeWallet(wallet.address)}
+                            onClick={() => removeWallet(wallet.id, wallet.address)}
                             className="text-red-500 hover:text-red-700 hover:bg-red-500/10"
+                            title="Remove wallet from watch list"
                           >
                             <X className="h-4 w-4" />
                           </Button>
