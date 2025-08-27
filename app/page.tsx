@@ -315,6 +315,13 @@ export default function HomePage() {
           await registerForNotifications(context.user)
         }
         
+        // Ensure Quick Auth session is established for this user (auto-connect)
+        try {
+          await sdk.quickAuth.getToken()
+        } catch (e) {
+          // Non-fatal; user can connect later
+        }
+
         // Context listeners may not be available in all SDK versions
         console.log('SDK context available:', !!context)
         
@@ -777,7 +784,7 @@ export default function HomePage() {
 
         {/* Tabs */}
         <Tabs defaultValue="wallets" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-card/70 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-4 bg-card/70 backdrop-blur-sm">
             <TabsTrigger value="wallets" className="flex items-center gap-2">
               <Wallet className="h-4 w-4" />
               Wallets
@@ -789,6 +796,10 @@ export default function HomePage() {
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Settings
+            </TabsTrigger>
+            <TabsTrigger value="account" className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4" />
+              Account
             </TabsTrigger>
           </TabsList>
 
@@ -1099,6 +1110,62 @@ export default function HomePage() {
                   
 
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="account" className="space-y-4 mt-6">
+            <Card className="border-0 bg-card/70 backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Account</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!farcasterContext.user ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Connect your Farcaster account to personalize your experience and receive notifications.
+                    </p>
+                    <Button
+                      onClick={async () => {
+                        try {
+                          const { sdk } = await import('@farcaster/miniapp-sdk')
+                          await sdk.quickAuth.getToken()
+                          const context = await sdk.context
+                          setFarcasterContext({
+                            user: context.user,
+                            client: { added: context.client.added }
+                          })
+                          if (context.user) {
+                            await registerForNotifications(context.user)
+                          }
+                          setActionResult('Connected to Farcaster')
+                          setTimeout(() => setActionResult(null), 3000)
+                        } catch (e) {
+                          setActionResult('Failed to connect Farcaster')
+                          setTimeout(() => setActionResult(null), 3000)
+                        }
+                      }}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600"
+                    >
+                      Connect Farcaster
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    {farcasterContext.user?.pfpUrl && (
+                      <img
+                        src={farcasterContext.user.pfpUrl}
+                        alt={farcasterContext.user?.username || 'User'}
+                        className="w-16 h-16 rounded-full"
+                      />
+                    )}
+                    <div>
+                      <p className="text-lg font-semibold">{farcasterContext.user?.displayName || farcasterContext.user?.username || 'User'}</p>
+                      <p className="text-sm text-muted-foreground">@{farcasterContext.user?.username || 'unknown'}</p>
+                      <p className="text-xs text-muted-foreground">FID: {farcasterContext.user?.fid || 'N/A'}</p>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
