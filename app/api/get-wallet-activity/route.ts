@@ -1,46 +1,113 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { blockchainMonitor } from "../../../lib/blockchain-monitor"
 
 export async function POST(request: NextRequest) {
   try {
-    const { address, limit = 10 } = await request.json()
+    const { address, limit = 20 } = await request.json()
 
     if (!address) {
       return NextResponse.json({ error: "Address is required" }, { status: 400 })
     }
 
-    console.log(`[GetWalletActivity] Fetching activity for ${address}`)
+    console.log(`[GetWalletActivity] Fetching Base transactions for: ${address}`)
+
+    // Use BaseScan/Etherscan API for real Base mainnet data
+    const apiKey = process.env.BASESCAN_API_KEY || process.env.ETHERSCAN_API_KEY
+    
+    if (!apiKey) {
+      return NextResponse.json({ 
+        success: true,
+        address,
+        transactions: [],
+        totalFound: 0,
+        source: "none",
+        timestamp: new Date().toISOString()
+      })
+    }
 
     try {
-      // Get the latest block number
-      const latestBlock = await blockchainMonitor.getLatestBlockNumber()
-      const fromBlock = Math.max(0, latestBlock - 100) // Get last 100 blocks
+      // Get normal transactions
+      const normalTxUrl = `https://api.basescan.org/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
+      
+      // Get ERC-20 token transfers
+      const tokenTxUrl = `https://api.basescan.org/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
 
-      // Get transaction history using the blockchain monitor
-      const transactions = await blockchainMonitor.getTransactionHistory(address, fromBlock, latestBlock)
+      const [normalResponse, tokenResponse] = await Promise.all([
+        fetch(normalTxUrl),
+        fetch(tokenTxUrl)
+      ])
 
-      // Limit the number of transactions
-      const limitedTransactions = transactions.slice(0, limit)
+      const [normalData, tokenData] = await Promise.all([
+        normalResponse.json(),
+        tokenResponse.json()
+      ])
+
+      const allTransactions = []
+
+      // Process normal transactions
+      if (normalData.status === "1" && normalData.result) {
+        normalData.result.forEach((tx: any) => {
+          allTransactions.push({
+            hash: tx.hash,
+            from: tx.from,
+            to: tx.to,
+            value: (parseFloat(tx.value) / 1e18).toString(),
+            type: tx.to === "0x0000000000000000000000000000000000000000" ? "burn" : "transfer",
+            timestamp: new Date(parseInt(tx.timeStamp) * 1000),
+            blockNumber: parseInt(tx.blockNumber),
+            gasUsed: tx.gasUsed,
+            gasPrice: tx.gasPrice,
+            chain: "base",
+            isError: tx.isError === "1"
+          })
+        })
+      }
+
+      // Process token transactions
+      if (tokenData.status === "1" && tokenData.result) {
+        tokenData.result.forEach((tx: any) => {
+          const decimals = parseInt(tx.tokenDecimal) || 18
+          const value = (parseFloat(tx.value) / Math.pow(10, decimals)).toString()
+          
+          allTransactions.push({
+            hash: tx.hash,
+            from: tx.from,
+            to: tx.to,
+            value: value,
+            type: "token",
+            timestamp: new Date(parseInt(tx.timeStamp) * 1000),
+            blockNumber: parseInt(tx.blockNumber),
+            gasUsed: tx.gasUsed,
+            gasPrice: tx.gasPrice,
+            chain: "base",
+            tokenSymbol: tx.tokenSymbol,
+            tokenName: tx.tokenName,
+            tokenAddress: tx.contractAddress
+          })
+        })
+      }
+
+      // Sort by timestamp (newest first) and limit results
+      const sortedTransactions = allTransactions
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+        .slice(0, limit)
 
       return NextResponse.json({
         success: true,
-        address: address,
-        transactions: limitedTransactions,
-        totalFound: transactions.length,
-        blockRange: { from: fromBlock, to: latestBlock },
+        address,
+        transactions: sortedTransactions,
+        totalFound: allTransactions.length,
+        source: "basescan",
         timestamp: new Date().toISOString()
       })
 
-    } catch (error) {
-      console.error(`[GetWalletActivity] Error fetching transactions for ${address}:`, error)
-      
-      // Return empty result if there's an error
+    } catch (apiError) {
+      console.error("[GetWalletActivity] BaseScan API error:", apiError)
       return NextResponse.json({
         success: true,
-        address: address,
+        address,
         transactions: [],
         totalFound: 0,
-        error: "Failed to fetch transactions",
+        error: "Failed to fetch from BaseScan API",
         timestamp: new Date().toISOString()
       })
     }

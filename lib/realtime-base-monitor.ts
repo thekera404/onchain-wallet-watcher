@@ -40,7 +40,7 @@ class RealtimeBaseMonitor {
       
       // Set up event listeners
       this.provider.on('error', this.handleError.bind(this))
-      this.provider.on('close', this.handleDisconnect.bind(this))
+      // Note: 'close' event may not be supported by all WebSocket providers
       
       // Test connection
       await this.provider.getNetwork()

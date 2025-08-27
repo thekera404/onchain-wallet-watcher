@@ -193,7 +193,7 @@ export default function HomePage() {
   // Real-time Base monitoring setup
   useEffect(() => {
     // Set up real-time transaction callback
-    const handleRealtimeTransaction = (tx: RealtimeTransaction) => {
+    const handleRealtimeTransaction = async (tx: RealtimeTransaction) => {
       console.log('🔥 Real-time transaction received:', tx.hash)
       
       // Check if transaction is not already in store
