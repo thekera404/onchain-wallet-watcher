@@ -24,6 +24,7 @@ import {
   Settings
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import { realtimeBaseMonitor, type RealtimeTransaction } from '@/lib/realtime-base-monitor'
 
 
 // Farcaster Mini App types
@@ -55,6 +56,7 @@ export default function HomePage() {
   })
   const [actionResult, setActionResult] = useState<string | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
+  const [realtimeStatus, setRealtimeStatus] = useState({ connected: false, watchedWallets: 0 })
 
   // Zustand store
   const { 
@@ -182,6 +184,69 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [farcasterContext.user, watchedWallets.length])
 
+  // Real-time Base monitoring setup
+  useEffect(() => {
+    // Set up real-time transaction callback
+    const handleRealtimeTransaction = (tx: RealtimeTransaction) => {
+      console.log('🔥 Real-time transaction received:', tx.hash)
+      
+      // Check if transaction is not already in store
+      if (!transactions.some(existing => existing.hash === tx.hash)) {
+        // Format transaction for our store
+        const txType = tx.type as 'transfer' | 'mint' | 'swap' | 'contract_interaction'
+        const formattedTx = {
+          hash: tx.hash,
+          fromAddress: tx.from,
+          toAddress: tx.to,
+          value: tx.value,
+          type: ['transfer', 'mint', 'swap', 'contract_interaction'].includes(tx.type) ? txType : 'transfer',
+          timestamp: tx.timestamp,
+          walletId: tx.from.toLowerCase() === watchedWallets.find(w => w.address.toLowerCase() === tx.from.toLowerCase())?.address.toLowerCase() ? tx.from : tx.to,
+          chain: 'base' as const,
+          blockNumber: tx.blockNumber,
+          gasUsed: tx.gasUsed,
+          gasPrice: tx.gasPrice
+        }
+        
+        addTransaction(formattedTx)
+        
+        // Show notification
+        setActionResult(`🔥 New ${tx.type} detected: ${tx.value} ETH`)
+        setTimeout(() => setActionResult(null), 5000)
+        
+        console.log('✅ Real-time transaction added to feed:', tx.hash)
+      }
+    }
+
+    // Subscribe all watched wallets to real-time monitoring
+    const userId = farcasterContext.user?.fid?.toString() || 'anonymous'
+    
+    watchedWallets.forEach(wallet => {
+      realtimeBaseMonitor.addWalletSubscription(
+        wallet.address,
+        userId,
+        handleRealtimeTransaction
+      )
+    })
+
+    // Update realtime status
+    const updateStatus = () => {
+      const status = realtimeBaseMonitor.getConnectionStatus()
+      setRealtimeStatus(status)
+    }
+    
+    updateStatus()
+    const statusInterval = setInterval(updateStatus, 5000)
+
+    // Cleanup function
+    return () => {
+      clearInterval(statusInterval)
+      watchedWallets.forEach(wallet => {
+        realtimeBaseMonitor.removeWalletSubscription(wallet.address, userId)
+      })
+    }
+  }, [farcasterContext.user?.fid, watchedWallets])
+
   const initializeFarcasterMiniApp = async () => {
     try {
       // Check if we're in a Farcaster environment
@@ -295,6 +360,9 @@ export default function HomePage() {
         return
       }
 
+      const userId = farcasterContext.user.fid?.toString() || 'anonymous'
+
+      // Start API-based monitoring
       const response = await fetch('/api/monitor-wallets', {
         method: 'POST',
         headers: {
@@ -303,14 +371,42 @@ export default function HomePage() {
         body: JSON.stringify({
           action: 'add',
           address,
-          userId: farcasterContext.user.fid?.toString() || 'anonymous',
+          userId,
           fid: farcasterContext.user.fid
         }),
       })
 
+      // Start real-time monitoring
+      const handleRealtimeTransaction = (tx: RealtimeTransaction) => {
+        console.log('🔥 Real-time transaction for newly added wallet:', tx.hash)
+        
+        if (!transactions.some(existing => existing.hash === tx.hash)) {
+          const txType = tx.type as 'transfer' | 'mint' | 'swap' | 'contract_interaction'
+          const formattedTx = {
+            hash: tx.hash,
+            fromAddress: tx.from,
+            toAddress: tx.to,
+            value: tx.value,
+            type: ['transfer', 'mint', 'swap', 'contract_interaction'].includes(tx.type) ? txType : 'transfer',
+            timestamp: tx.timestamp,
+            walletId: address,
+            chain: 'base' as const,
+            blockNumber: tx.blockNumber,
+            gasUsed: tx.gasUsed,
+            gasPrice: tx.gasPrice
+          }
+          
+          addTransaction(formattedTx)
+          setActionResult(`🔥 New ${tx.type} detected: ${tx.value} ETH`)
+          setTimeout(() => setActionResult(null), 5000)
+        }
+      }
+
+      realtimeBaseMonitor.addWalletSubscription(address, userId, handleRealtimeTransaction)
+
       if (response.ok) {
         console.log(`✅ Started monitoring wallet: ${address}`)
-        setActionResult(`Monitoring enabled for ${address.slice(0, 6)}...${address.slice(-4)}`)
+        setActionResult(`Real-time monitoring enabled for ${address.slice(0, 6)}...${address.slice(-4)}`)
       } else {
         console.error('Failed to start monitoring:', await response.text())
       }
@@ -326,6 +422,9 @@ export default function HomePage() {
         return
       }
 
+      const userId = farcasterContext.user.fid?.toString() || 'anonymous'
+
+      // Stop API-based monitoring
       const response = await fetch('/api/monitor-wallets', {
         method: 'POST',
         headers: {
@@ -334,9 +433,12 @@ export default function HomePage() {
         body: JSON.stringify({
           action: 'remove',
           address,
-          userId: farcasterContext.user.fid?.toString() || 'anonymous'
+          userId
         }),
       })
+
+      // Stop real-time monitoring
+      realtimeBaseMonitor.removeWalletSubscription(address, userId)
 
       if (response.ok) {
         console.log(`🛑 Stopped monitoring wallet: ${address}`)
@@ -470,6 +572,22 @@ export default function HomePage() {
                   </span>
                 </div>
               )}
+
+              {/* Real-time Status Indicator */}
+              <div className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-lg border ${
+                realtimeStatus.connected 
+                  ? 'bg-red-500/10 border-red-500/20' 
+                  : 'bg-gray-500/10 border-gray-500/20'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${
+                  realtimeStatus.connected ? 'bg-red-500 animate-pulse' : 'bg-gray-500'
+                }`} />
+                <span className={`text-xs font-medium ${
+                  realtimeStatus.connected ? 'text-red-600' : 'text-gray-600'
+                }`}>
+                  {realtimeStatus.connected ? 'LIVE Base' : 'Offline'}
+                </span>
+              </div>
 
 
 
@@ -708,6 +826,13 @@ export default function HomePage() {
                 <Badge variant="outline" className="text-xs">
                   {watchedWallets.length} wallets • {transactions.length} txs
                 </Badge>
+                {/* Real-time Status */}
+                <Badge 
+                  variant={realtimeStatus.connected ? "default" : "secondary"} 
+                  className={`text-xs ${realtimeStatus.connected ? 'bg-green-500' : 'bg-gray-500'}`}
+                >
+                  {realtimeStatus.connected ? '🔴 LIVE' : '⚫ Offline'}
+                </Badge>
                 {transactions.length > 0 && (
                   <Button
                     variant="outline"
@@ -743,12 +868,20 @@ export default function HomePage() {
                               })
                               setActionResult(`Added ${data.transactions.length} test transactions`)
                             }
+
+                            // Also test real-time monitoring status
+                            const status = realtimeBaseMonitor.getConnectionStatus()
+                            console.log('Real-time monitor status:', status)
+                            
                           } catch (error) {
                             console.error('Test failed:', error)
                           }
+                        } else {
+                          setActionResult('Add a wallet first to test monitoring')
                         }
                       }}
                       className="text-blue-600"
+                      title="Test transaction detection and real-time monitoring"
                     >
                       Test
                     </Button>
