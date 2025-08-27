@@ -605,7 +605,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <nav className="bg-card/90 backdrop-blur-md border-b border-border/50 sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -784,24 +784,6 @@ export default function HomePage() {
 
         {/* Tabs */}
         <Tabs defaultValue="wallets" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-card/70 backdrop-blur-sm">
-            <TabsTrigger value="wallets" className="flex items-center gap-2">
-              <Wallet className="h-4 w-4" />
-              Wallets
-            </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center gap-2">
-              <Activity className="h-4 w-4" />
-              Activity
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Settings
-            </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4" />
-              Account
-            </TabsTrigger>
-          </TabsList>
 
           <TabsContent value="wallets" className="space-y-4 mt-6">
             {/* Add Wallet Form */}
@@ -1169,6 +1151,26 @@ export default function HomePage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Footer nav: icon-only tabs */}
+          <TabsList className="fixed bottom-0 left-0 right-0 grid grid-cols-4 bg-card/90 backdrop-blur border-t border-border/50 h-14">
+            <TabsTrigger value="wallets" className="flex items-center justify-center">
+              <Wallet className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">Wallets</span>
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="flex items-center justify-center">
+              <Activity className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">Activity</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center justify-center">
+              <Settings className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">Settings</span>
+            </TabsTrigger>
+            <TabsTrigger value="account" className="flex items-center justify-center">
+              <CheckCircle className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">Account</span>
+            </TabsTrigger>
+          </TabsList>
         </Tabs>
       </div>
     </div>
