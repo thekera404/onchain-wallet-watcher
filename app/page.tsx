@@ -41,6 +41,16 @@ interface FarcasterContext {
 }
 
 
+// Minimal Farcaster action type used by this app
+type FarcasterAction = {
+  type: 'ADD_WALLET' | 'REMOVE_WALLET' | string
+  payload?: {
+    address?: string
+    [key: string]: unknown
+  }
+}
+
+
 
 export default function HomePage() {
   const { theme, setTheme } = useTheme()
@@ -321,20 +331,39 @@ export default function HomePage() {
     }
   }
 
+  // Authenticated fetch using Farcaster Quick Auth when available
+  const authFetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+    try {
+      const { sdk } = await import('@farcaster/miniapp-sdk')
+      return await sdk.quickAuth.fetch(input as string, init as any)
+    } catch {
+      return fetch(input, init)
+    }
+  }
+
   const handleFarcasterAction = async (action: FarcasterAction) => {
     console.log("Received Farcaster action:", action)
     
     switch (action.type) {
       case 'ADD_WALLET':
-        if (action.payload?.address) {
-          addWatchedWallet(action.payload.address)
-          setActionResult(`Wallet ${action.payload.address} added successfully!`)
+        {
+          const addressToAdd = action.payload?.address
+          if (addressToAdd) {
+            await addWallet(addressToAdd)
+            setActionResult(`Wallet ${addressToAdd} added successfully!`)
+          }
         }
         break
       case 'REMOVE_WALLET':
-        if (action.payload?.address) {
-          removeWatchedWallet(action.payload.address)
-          setActionResult(`Wallet ${action.payload.address} removed successfully!`)
+        {
+          const addressToRemove = action.payload?.address
+          if (addressToRemove) {
+            const wallet = watchedWallets.find(w => w.address === addressToRemove)
+            if (wallet) {
+              removeWatchedWallet(wallet.id)
+              setActionResult(`Wallet ${addressToRemove} removed successfully!`)
+            }
+          }
         }
         break
 
@@ -391,7 +420,7 @@ export default function HomePage() {
       const userId = farcasterContext.user.fid?.toString() || 'anonymous'
 
       // Start API-based monitoring
-      const response = await fetch('/api/monitor-wallets', {
+      const response = await authFetch('/api/monitor-wallets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,7 +482,7 @@ export default function HomePage() {
       const userId = farcasterContext.user.fid?.toString() || 'anonymous'
 
       // Stop API-based monitoring
-      const response = await fetch('/api/monitor-wallets', {
+      const response = await authFetch('/api/monitor-wallets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

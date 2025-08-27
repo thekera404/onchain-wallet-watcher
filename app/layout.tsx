@@ -42,6 +42,7 @@ export const metadata: Metadata = {
   },
   other: {
     "fc:frame": JSON.stringify(frameMetadata),
+    "fc:miniapp": JSON.stringify(frameMetadata),
     "og:image": "https://onchain-wallet-watcher.vercel.app/og-image.svg",
     "og:title": "Onchain Wallet Watcher",
     "og:description":
@@ -57,6 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://auth.farcaster.xyz" />
         <style>{`
           html {
             font-family: ${GeistSans.style.fontFamily};

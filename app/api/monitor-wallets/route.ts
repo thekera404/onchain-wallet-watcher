@@ -1,10 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { verifyQuickAuth } from "@/lib/quick-auth"
 
 // Store user wallets (in production, use a proper database)
 const userWallets = new Map<string, string[]>()
 
 export async function POST(request: NextRequest) {
   try {
+    // Require Quick Auth for modifying monitored wallets
+    const user = await verifyQuickAuth(request)
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { action, address, userId, fid } = await request.json()
 
     if (action === "add" && address && userId) {

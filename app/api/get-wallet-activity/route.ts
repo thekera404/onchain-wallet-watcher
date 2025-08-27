@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[GetWalletActivity] Fetching Base transactions for: ${address}`)
 
-    // Use BaseScan/Etherscan API for real Base mainnet data
+    // Use Etherscan V2 MultiChain API for Base mainnet data (chainid=8453)
     const apiKey = process.env.BASESCAN_API_KEY || process.env.ETHERSCAN_API_KEY
     
     if (!apiKey) {
@@ -25,23 +25,36 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Get normal transactions
-      const normalTxUrl = `https://api.basescan.org/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
-      
-      // Get ERC-20 token transfers
-      const tokenTxUrl = `https://api.basescan.org/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
+      const base = `https://api.etherscan.io/v2/api?chainid=8453`
+      const normalTxUrl = `${base}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
+      const tokenTxUrl = `${base}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
 
       const [normalResponse, tokenResponse] = await Promise.all([
         fetch(normalTxUrl),
         fetch(tokenTxUrl)
       ])
 
-      const [normalData, tokenData] = await Promise.all([
+      const [normalData, tokenData]: any[] = await Promise.all([
         normalResponse.json(),
         tokenResponse.json()
       ])
 
-      const allTransactions = []
+      const allTransactions: Array<{
+        hash: string
+        from: string
+        to: string
+        value: string
+        type: string
+        timestamp: Date
+        blockNumber: number
+        gasUsed?: string
+        gasPrice?: string
+        chain: string
+        tokenSymbol?: string
+        tokenName?: string
+        tokenAddress?: string
+        isError?: boolean
+      }> = []
 
       // Process normal transactions
       if (normalData.status === "1" && normalData.result) {
@@ -101,13 +114,13 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (apiError) {
-      console.error("[GetWalletActivity] BaseScan API error:", apiError)
+      console.error("[GetWalletActivity] Etherscan V2 API error:", apiError)
       return NextResponse.json({
         success: true,
         address,
         transactions: [],
         totalFound: 0,
-        error: "Failed to fetch from BaseScan API",
+        error: "Failed to fetch from Etherscan V2 API",
         timestamp: new Date().toISOString()
       })
     }

@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`[GetBaseTransactions] Fetching Base transactions for: ${address}`)
 
-    // Use BaseScan/Etherscan API for real Base mainnet data
+    // Use Etherscan V2 MultiChain API for Base mainnet data (chainid=8453)
     const apiKey = process.env.BASESCAN_API_KEY || process.env.ETHERSCAN_API_KEY
     
     if (!apiKey) {
@@ -22,14 +22,11 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Get normal transactions
-      const normalTxUrl = `https://api.basescan.org/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
-      
-      // Get internal transactions  
-      const internalTxUrl = `https://api.basescan.org/api?module=account&action=txlistinternal&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
-      
-      // Get ERC-20 token transfers
-      const tokenTxUrl = `https://api.basescan.org/api?module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
+      // Etherscan V2 MultiChain endpoints
+      const base = `https://api.etherscan.io/v2/api?chainid=8453`
+      const normalTxUrl = `${base}&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
+      const internalTxUrl = `${base}&module=account&action=txlistinternal&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
+      const tokenTxUrl = `${base}&module=account&action=tokentx&address=${address}&startblock=0&endblock=99999999&page=1&offset=${limit}&sort=desc&apikey=${apiKey}`
 
       const [normalResponse, internalResponse, tokenResponse] = await Promise.all([
         fetch(normalTxUrl),
@@ -121,12 +118,12 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (apiError) {
-      console.error("[GetBaseTransactions] BaseScan API error:", apiError)
+      console.error("[GetBaseTransactions] Etherscan V2 API error:", apiError)
       return NextResponse.json({
         success: false,
         address,
         transactions: [],
-        error: "Failed to fetch from BaseScan API",
+        error: "Failed to fetch from Etherscan V2 API",
         timestamp: new Date().toISOString()
       })
     }

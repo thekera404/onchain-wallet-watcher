@@ -65,17 +65,17 @@ export async function POST(request: NextRequest) {
 
     // Handle official Farcaster webhook events
     const data = await parseWebhookEvent(requestJson, verifyAppKeyWithNeynar)
-    console.log("[v0] Official Farcaster webhook event received:", data.event)
+    console.log("[webhook] Official Farcaster webhook event received:", data.event)
 
     switch (data.event) {
       case "miniapp_added":
-        console.log("[v0] EtherDROPS mini app added for FID:", data.fid)
+        console.log("[webhook] Onchain Wallet Watcher mini app added for FID:", data.fid)
         if (data.notificationDetails) {
           notificationTokens.set(data.fid.toString(), {
             token: data.notificationDetails.token,
             url: data.notificationDetails.url,
           })
-          console.log("[v0] Notification token saved for FID:", data.fid)
+          console.log("[webhook] Notification token saved for FID:", data.fid)
 
           try {
             await fetch(data.notificationDetails.url, {
@@ -83,20 +83,20 @@ export async function POST(request: NextRequest) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 notificationId: `welcome-${data.fid}-${Date.now()}`,
-                title: "🎉 EtherDROPS Watcher Added!",
+                title: "🎉 Onchain Wallet Watcher Added!",
                 body: "Start tracking Base wallets for real-time activity alerts",
-                targetUrl: process.env.NEXT_PUBLIC_APP_URL || "https://etherdrops-watcher.vercel.app",
+                targetUrl: process.env.NEXT_PUBLIC_APP_URL,
                 tokens: [data.notificationDetails.token],
               }),
             })
           } catch (error) {
-            console.error("[v0] Failed to send welcome notification:", error)
+            console.error("[webhook] Failed to send welcome notification:", error)
           }
         }
         break
 
       case "notifications_enabled":
-        console.log("[v0] Notifications enabled for FID:", data.fid)
+        console.log("[webhook] Notifications enabled for FID:", data.fid)
         if (data.notificationDetails) {
           notificationTokens.set(data.fid.toString(), {
             token: data.notificationDetails.token,
@@ -106,19 +106,19 @@ export async function POST(request: NextRequest) {
         break
 
       case "notifications_disabled":
-        console.log("[v0] Notifications disabled for FID:", data.fid)
+        console.log("[webhook] Notifications disabled for FID:", data.fid)
         notificationTokens.delete(data.fid.toString())
         break
 
       case "miniapp_removed":
-        console.log("[v0] EtherDROPS mini app removed for FID:", data.fid)
+        console.log("[webhook] Onchain Wallet Watcher mini app removed for FID:", data.fid)
         notificationTokens.delete(data.fid.toString())
         break
     }
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("[v0] EtherDROPS webhook error:", error)
+    console.error("[webhook] error:", error)
     return NextResponse.json({ error: "Invalid webhook" }, { status: 400 })
   }
 }

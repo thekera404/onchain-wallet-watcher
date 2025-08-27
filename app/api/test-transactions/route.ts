@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
       }
     ]
 
-    // Try to get real transactions from BaseScan/Etherscan API if available
+    // Try to get real transactions from Etherscan V2 MultiChain API if available
     let realTransactions = []
     const apiKey = process.env.BASESCAN_API_KEY || process.env.ETHERSCAN_API_KEY
     if (apiKey) {
       try {
-        const baseScanUrl = `https://api.basescan.org/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`
+        const etherscanV2Url = `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`
         
-        const response = await fetch(baseScanUrl)
+        const response = await fetch(etherscanV2Url)
         const data = await response.json()
         
         if (data.status === "1" && data.result) {
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
           }))
         }
       } catch (error) {
-        console.error("[TestTransactions] BaseScan API error:", error)
+        console.error("[TestTransactions] Etherscan V2 API error:", error)
       }
     }
 
