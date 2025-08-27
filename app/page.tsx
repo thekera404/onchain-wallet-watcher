@@ -16,9 +16,7 @@ import {
   Moon, 
   Plus, 
   X, 
-  ExternalLink,
   CheckCircle,
-  AlertCircle,
   Zap,
   Activity,
   Settings
@@ -42,10 +40,7 @@ interface FarcasterContext {
   }
 }
 
-interface FarcasterAction {
-  type: string
-  payload: any
-}
+
 
 export default function HomePage() {
   const { theme, setTheme } = useTheme()
@@ -121,10 +116,10 @@ export default function HomePage() {
         const addresses = watchedWallets.map(w => w.address)
         console.log('🔍 Polling transactions for:', addresses)
 
-        // First try to get wallet activity for each wallet
+        // Get real Base transactions for each wallet
         for (const address of addresses) {
           try {
-            const response = await fetch('/api/get-wallet-activity', {
+            const response = await fetch('/api/get-base-transactions', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -184,6 +179,17 @@ export default function HomePage() {
     return () => clearInterval(interval)
   }, [farcasterContext.user, watchedWallets.length])
 
+  // Initialize wallet monitoring on app start
+  useEffect(() => {
+    // Auto-start monitoring for existing wallets when user connects
+    if (farcasterContext.user && watchedWallets.length > 0) {
+      console.log(`🔄 Auto-starting monitoring for ${watchedWallets.length} existing wallets`)
+      watchedWallets.forEach(wallet => {
+        startWalletMonitoring(wallet.address)
+      })
+    }
+  }, [farcasterContext.user?.fid])
+
   // Real-time Base monitoring setup
   useEffect(() => {
     // Set up real-time transaction callback
@@ -210,9 +216,31 @@ export default function HomePage() {
         
         addTransaction(formattedTx)
         
-        // Show notification
+        // Show notification and send to Farcaster
         setActionResult(`🔥 New ${tx.type} detected: ${tx.value} ETH`)
         setTimeout(() => setActionResult(null), 5000)
+        
+        // Send Farcaster notification
+        try {
+          await fetch('/api/webhook', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'transaction_detected',
+              data: {
+                fid: farcasterContext.user?.fid,
+                transaction: {
+                  hash: tx.hash,
+                  type: tx.type,
+                  value: tx.value,
+                  address: tx.from === watchedWallets.find(w => w.address.toLowerCase() === tx.from.toLowerCase())?.address.toLowerCase() ? tx.from : tx.to
+                }
+              }
+            })
+          })
+        } catch (notifyError) {
+          console.warn('Failed to send Farcaster notification:', notifyError)
+        }
         
         console.log('✅ Real-time transaction added to feed:', tx.hash)
       }
@@ -323,8 +351,8 @@ export default function HomePage() {
       return false
     }
 
-    if (watchedWallets.length >= 5) {
-      setActionResult('Maximum wallet limit reached (5 wallets)')
+    if (watchedWallets.length >= 3) {
+      setActionResult('Maximum wallet limit reached (3 wallets)')
       setTimeout(() => setActionResult(null), 3000)
       return false
     }
@@ -649,7 +677,7 @@ export default function HomePage() {
                 Track your favorite Base wallets and get notified when they mint, swap, or transfer tokens.
               </p>
               <div className="text-xs text-muted-foreground/70 space-y-1">
-                <p>• Add wallets to watch (up to 5)</p>
+                <p>• Add wallets to watch (up to 3)</p>
                 <p>• Track high-value transactions</p>
 
                 <p>⚠️ Connect to Farcaster for notifications</p>
@@ -671,7 +699,7 @@ export default function HomePage() {
               <div className="text-xs text-muted-foreground/70 space-y-1">
                 <p>✅ Connected as @{farcasterContext.user?.username || 'Unknown'}</p>
                 <p>• Your profile is verified</p>
-                <p>• Add wallets to watch (up to 5)</p>
+                <p>• Add wallets to watch (up to 3)</p>
                 <p>• Get real-time notifications</p>
                 <p>• Track high-value transactions</p>
               </div>
@@ -687,7 +715,7 @@ export default function HomePage() {
                 <Wallet className="h-4 w-4 text-blue-600" />
                 <div>
                   <p className="text-xs text-muted-foreground">Watching</p>
-                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}/5</p>
+                  <p className="text-lg font-bold text-card-foreground">{watchedWallets.length}/3</p>
                 </div>
               </div>
             </CardContent>

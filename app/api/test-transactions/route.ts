@@ -50,11 +50,12 @@ export async function POST(request: NextRequest) {
       }
     ]
 
-    // Try to get real transactions from BaseScan if API key is available
+    // Try to get real transactions from BaseScan/Etherscan API if available
     let realTransactions = []
-    if (process.env.BASESCAN_API_KEY) {
+    const apiKey = process.env.BASESCAN_API_KEY || process.env.ETHERSCAN_API_KEY
+    if (apiKey) {
       try {
-        const baseScanUrl = `https://api.basescan.org/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${process.env.BASESCAN_API_KEY}`
+        const baseScanUrl = `https://api.basescan.org/api?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${apiKey}`
         
         const response = await fetch(baseScanUrl)
         const data = await response.json()

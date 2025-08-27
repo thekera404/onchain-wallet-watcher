@@ -24,8 +24,8 @@ class RealtimeBaseMonitor {
   private subscriptions: Map<string, WalletSubscription[]> = new Map()
   private isConnected = false
   private reconnectAttempts = 0
-  private maxReconnectAttempts = 5
-  private reconnectDelay = 5000
+  private maxReconnectAttempts = 10
+  private reconnectDelay = 3000
 
   constructor() {
     this.initializeProvider()
@@ -33,7 +33,7 @@ class RealtimeBaseMonitor {
 
   private async initializeProvider() {
     try {
-      const wsUrl = process.env.NEXT_PUBLIC_BASE_WS_URL || 'wss://base-mainnet.g.alchemy.com/v2/demo'
+      const wsUrl = process.env.BASE_WS_URL || process.env.NEXT_PUBLIC_BASE_WS_URL || 'wss://base-mainnet.g.alchemy.com/v2/demo'
       console.log('[RealtimeBaseMonitor] Connecting to Base mainnet WebSocket:', wsUrl)
       
       this.provider = new ethers.WebSocketProvider(wsUrl)
@@ -63,8 +63,13 @@ class RealtimeBaseMonitor {
 
     console.log('[RealtimeBaseMonitor] Starting real-time transaction monitoring...')
     
-    // Listen for pending transactions
+    // Listen for pending transactions (throttled to avoid spam)
+    let lastPendingCheck = 0
     this.provider.on('pending', async (txHash: string) => {
+      const now = Date.now()
+      if (now - lastPendingCheck < 1000) return // Throttle to 1 per second
+      lastPendingCheck = now
+      
       try {
         const tx = await this.provider!.getTransaction(txHash)
         if (tx && this.isWatchedTransaction(tx)) {

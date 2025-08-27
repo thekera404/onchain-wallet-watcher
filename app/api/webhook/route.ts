@@ -34,6 +34,30 @@ export async function POST(request: NextRequest) {
             })
           }
           break
+        case "transaction_detected":
+          console.log("[v0] Transaction detected for FID:", data.fid)
+          if (data.fid && data.transaction) {
+            const userToken = notificationTokens.get(data.fid.toString())
+            if (userToken) {
+              try {
+                await fetch(userToken.url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    notificationId: `tx-${data.transaction.hash}-${Date.now()}`,
+                    title: `🔥 ${data.transaction.type.toUpperCase()} Transaction Detected`,
+                    body: `${data.transaction.value} ETH on Base - ${data.transaction.address.slice(0,6)}...${data.transaction.address.slice(-4)}`,
+                    targetUrl: `${process.env.NEXT_PUBLIC_APP_URL}?tx=${data.transaction.hash}`,
+                    tokens: [userToken.token],
+                  }),
+                })
+                console.log("[v0] Transaction notification sent for:", data.transaction.hash)
+              } catch (error) {
+                console.error("[v0] Failed to send transaction notification:", error)
+              }
+            }
+          }
+          break
       }
       
       return NextResponse.json({ success: true })
