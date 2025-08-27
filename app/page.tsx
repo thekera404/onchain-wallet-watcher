@@ -19,7 +19,8 @@ import {
   CheckCircle,
   Zap,
   Activity,
-  Settings
+  Settings,
+  User
 } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { realtimeBaseMonitor, type RealtimeTransaction } from '@/lib/realtime-base-monitor'
@@ -605,7 +606,10 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div
+      className="min-h-screen bg-background"
+      style={{ paddingBottom: 'calc(56px + env(safe-area-inset-bottom))' }}
+    >
       {/* Header */}
       <nav className="bg-card/90 backdrop-blur-md border-b border-border/50 sticky top-0 z-10 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1153,21 +1157,33 @@ export default function HomePage() {
           </TabsContent>
 
           {/* Footer nav: icon-only tabs */}
-          <TabsList className="fixed bottom-0 left-0 right-0 grid grid-cols-4 bg-card/90 backdrop-blur border-t border-border/50 h-14">
-            <TabsTrigger value="wallets" className="flex items-center justify-center">
+          <TabsList
+            className="fixed bottom-0 left-0 right-0 grid grid-cols-4 bg-card/90 backdrop-blur border-t border-border/50 h-14 z-50"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            <TabsTrigger value="wallets" className="flex items-center justify-center h-full">
               <Wallet className="h-5 w-5" aria-hidden="true" />
               <span className="sr-only">Wallets</span>
             </TabsTrigger>
-            <TabsTrigger value="activity" className="flex items-center justify-center">
+            <TabsTrigger value="activity" className="flex items-center justify-center h-full">
               <Activity className="h-5 w-5" aria-hidden="true" />
               <span className="sr-only">Activity</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center justify-center">
+            <TabsTrigger value="settings" className="flex items-center justify-center h-full">
               <Settings className="h-5 w-5" aria-hidden="true" />
               <span className="sr-only">Settings</span>
             </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center justify-center">
-              <CheckCircle className="h-5 w-5" aria-hidden="true" />
+            <TabsTrigger value="account" className="flex items-center justify-center h-full">
+              {farcasterContext.user?.pfpUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={farcasterContext.user.pfpUrl}
+                  alt={farcasterContext.user?.username || 'Account'}
+                  className="h-6 w-6 rounded-full object-cover"
+                />
+              ) : (
+                <User className="h-5 w-5" aria-hidden="true" />
+              )}
               <span className="sr-only">Account</span>
             </TabsTrigger>
           </TabsList>
