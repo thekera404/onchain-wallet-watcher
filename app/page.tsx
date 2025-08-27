@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTheme } from 'next-themes'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -63,6 +63,7 @@ export default function HomePage() {
   const [actionResult, setActionResult] = useState<string | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [realtimeStatus, setRealtimeStatus] = useState({ connected: false, watchedWallets: 0 })
+  const initializedAtRef = useRef<Date>(new Date())
 
   // Zustand store
   const { 
@@ -145,12 +146,15 @@ export default function HomePage() {
               const data = await response.json()
               console.log(`📊 Found ${data.transactions?.length || 0} transactions for ${address}`)
               
-              // Add new transactions to the store
+              // Add only transactions that occurred after app initialization (avoid old history)
               if (data.transactions && data.transactions.length > 0) {
+                const startedAt = initializedAtRef.current.getTime()
                 data.transactions.forEach((tx: any) => {
-                  // Only add if not already in store
-                  if (!transactions.some(existing => existing.hash === tx.hash)) {
-                    // Format transaction for our store
+                  const txTime = new Date(tx.timestamp || 0).getTime()
+                  if (
+                    txTime > startedAt &&
+                    !transactions.some(existing => existing.hash === tx.hash)
+                  ) {
                     const formattedTx = {
                       hash: tx.hash,
                       fromAddress: tx.from || tx.fromAddress,
@@ -694,10 +698,13 @@ export default function HomePage() {
 
       {/* Action Result Toast */}
       {actionResult && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
-            <CheckCircle className="h-4 w-4" />
-            {actionResult}
+        <div
+          className="fixed left-0 right-0 z-50 flex justify-center"
+          style={{ bottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+        >
+          <div className="max-w-sm w-[calc(100%-32px)] bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 flex-shrink-0" />
+            <span className="text-sm truncate">{actionResult}</span>
           </div>
         </div>
       )}
