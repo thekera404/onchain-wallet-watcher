@@ -700,7 +700,7 @@ export default function HomePage() {
       {actionResult && (
         <div
           className="fixed left-0 right-0 z-50 flex justify-center"
-          style={{ bottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+          style={{ top: 'calc(16px + env(safe-area-inset-top))' }}
         >
           <div className="max-w-sm w-[calc(100%-32px)] bg-green-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2">
             <CheckCircle className="h-4 w-4 flex-shrink-0" />
@@ -880,9 +880,9 @@ export default function HomePage() {
 
           <TabsContent value="activity" className="space-y-4 mt-6">
             {/* Activity Header */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Transaction Activity</h3>
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <h3 className="text-base sm:text-lg font-semibold">Transaction Activity</h3>
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Debug Info */}
                 <Badge variant="outline" className="text-xs">
                   {watchedWallets.length} wallets • {transactions.length} txs
@@ -905,59 +905,17 @@ export default function HomePage() {
                   </Button>
                 )}
                 {farcasterContext.user && (
-                  <>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        // Test transaction loading
-                        if (watchedWallets.length > 0) {
-                          const address = watchedWallets[0].address
-                          try {
-                            const response = await fetch('/api/test-transactions', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ address })
-                            })
-                            const data = await response.json()
-                            console.log('Test transactions:', data)
-                            if (data.transactions) {
-                              data.transactions.forEach((tx: any) => {
-                                if (!transactions.some(existing => existing.hash === tx.hash)) {
-                                  addTransaction(tx)
-                                }
-                              })
-                              setActionResult(`Added ${data.transactions.length} test transactions`)
-                            }
-
-                            // Also test real-time monitoring status
-                            const status = realtimeBaseMonitor.getConnectionStatus()
-                            console.log('Real-time monitor status:', status)
-                            
-                          } catch (error) {
-                            console.error('Test failed:', error)
-                          }
-                        } else {
-                          setActionResult('Add a wallet first to test monitoring')
-                        }
-                      }}
-                      className="text-blue-600"
-                      title="Test transaction detection and real-time monitoring"
-                    >
-                      Test
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        // Manual refresh
-                        window.location.reload()
-                      }}
-                      className="text-muted-foreground"
-                    >
-                      Refresh
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Manual refresh
+                      window.location.reload()
+                    }}
+                    className="text-muted-foreground"
+                  >
+                    Refresh
+                  </Button>
                 )}
               </div>
             </div>
