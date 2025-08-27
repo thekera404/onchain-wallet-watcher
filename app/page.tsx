@@ -968,7 +968,10 @@ export default function HomePage() {
                   </CardContent>
                 </Card>
               ) : (
-                transactions.slice(0, 20).map((tx, index) => (
+                [...transactions]
+                  .sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime())
+                  .slice(0, 20)
+                  .map((tx, index) => (
                   <Card key={tx.id || index} className="border-0 bg-card/70 backdrop-blur-sm">
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
@@ -998,9 +1001,19 @@ export default function HomePage() {
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground font-mono">
-                              {tx.hash?.slice(0, 8)}...{tx.hash?.slice(-6) || 'N/A'}
-                            </p>
+                            {tx.hash ? (
+                              <a
+                                href={`https://basescan.org/tx/${tx.hash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-mono text-blue-600 hover:underline"
+                                title={tx.hash}
+                              >
+                                {tx.hash.slice(0, 8)}...{tx.hash.slice(-6)}
+                              </a>
+                            ) : (
+                              <p className="text-sm text-muted-foreground font-mono">N/A</p>
+                            )}
                             <p className="text-xs text-muted-foreground">
                               {tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString() : 'Unknown time'}
                             </p>
@@ -1158,7 +1171,7 @@ export default function HomePage() {
 
           {/* Footer nav: icon-only tabs */}
           <TabsList
-            className="fixed bottom-0 left-0 right-0 grid grid-cols-4 bg-card/90 backdrop-blur border-t border-border/50 h-14 z-50"
+            className="fixed inset-x-0 bottom-0 w-screen grid grid-cols-4 bg-card/90 backdrop-blur border-t border-border/50 h-14 z-50"
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             <TabsTrigger value="wallets" className="flex items-center justify-center h-full">
