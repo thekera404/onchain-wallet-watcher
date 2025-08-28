@@ -387,7 +387,7 @@ export default function HomePage() {
     setTimeout(() => setActionResult(null), 3000)
   }
 
-  const addWallet = async (address: string) => {
+  const addWallet = async (address: string, label?: string) => {
     if (!address || watchedWallets.some(w => w.address === address)) {
       return false
     }
@@ -401,7 +401,7 @@ export default function HomePage() {
     // Add wallet to store
     addWatchedWallet({
       address,
-      label: `Wallet ${watchedWallets.length + 1}`,
+      label: (label && label.trim()) ? label.trim() : `Wallet ${watchedWallets.length + 1}`,
       chain: 'base',
       isActive: true,
       filters: {
@@ -807,8 +807,9 @@ export default function HomePage() {
                   e.preventDefault()
                   const formData = new FormData(e.currentTarget)
                   const address = formData.get('address') as string
+                  const label = (formData.get('label') as string) || undefined
                   if (address) {
-                    addWallet(address)
+                    addWallet(address, label)
                     e.currentTarget.reset()
                   }
                 }} className="flex gap-2">
@@ -819,6 +820,12 @@ export default function HomePage() {
                     required
                     pattern="^0x[a-fA-F0-9]{40}$"
                     title="Please enter a valid Ethereum address starting with 0x"
+                  />
+                  <Input
+                    name="label"
+                    placeholder="Optional name (e.g. My trading wallet)"
+                    className="flex-1 hidden sm:block"
+                    maxLength={40}
                   />
                   <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600">
                     <Plus className="h-4 w-4 mr-1" />
