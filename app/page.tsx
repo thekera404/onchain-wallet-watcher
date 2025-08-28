@@ -63,6 +63,7 @@ export default function HomePage() {
   const [actionResult, setActionResult] = useState<string | null>(null)
   const [isActionLoading, setIsActionLoading] = useState(false)
   const [realtimeStatus, setRealtimeStatus] = useState({ connected: false, watchedWallets: 0 })
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const initializedAtRef = useRef<Date>(new Date())
 
   // Zustand store
@@ -380,6 +381,53 @@ export default function HomePage() {
     }
   }
 
+  // Soft refresh: re-fetch recent transactions without reloading the app
+  const refreshTransactions = async () => {
+    if (!farcasterContext.user || watchedWallets.length === 0) return
+    setIsRefreshing(true)
+    try {
+      const addresses = watchedWallets.map(w => w.address)
+      const startedAt = initializedAtRef.current.getTime()
+      for (const address of addresses) {
+        try {
+          const response = await fetch('/api/get-base-transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ address, limit: 10 })
+          })
+          if (!response.ok) continue
+          const data = await response.json()
+          if (data.transactions && data.transactions.length > 0) {
+            for (const tx of data.transactions as any[]) {
+              const txTime = new Date(tx.timestamp || 0).getTime()
+              const exists = transactions.some(existing => existing.hash === tx.hash)
+              if (txTime > startedAt && !exists) {
+                const formattedTx = {
+                  hash: tx.hash,
+                  fromAddress: tx.from || tx.fromAddress,
+                  toAddress: tx.to || tx.toAddress,
+                  value: tx.value,
+                  type: tx.type || 'transaction',
+                  timestamp: tx.timestamp || new Date(),
+                  walletId: address,
+                  chain: 'base',
+                  blockNumber: tx.blockNumber,
+                  gasUsed: tx.gasUsed,
+                  gasPrice: tx.gasPrice
+                }
+                addTransaction(formattedTx)
+              }
+            }
+          }
+        } catch {}
+      }
+      setActionResult('Activity refreshed')
+      setTimeout(() => setActionResult(null), 2000)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   const handleFarcasterAction = async (action: FarcasterAction) => {
     console.log("Received Farcaster action:", action)
     
@@ -472,43 +520,7 @@ export default function HomePage() {
         }),
       })
 
-      // Start real-time monitoring
-      const handleRealtimeTransaction = async (tx: RealtimeTransaction) => {
-        console.log('🔥 Real-time transaction for newly added wallet:', tx.hash)
-        
-        if (!transactions.some(existing => existing.hash === tx.hash)) {
-          const txType = tx.type as 'transfer' | 'mint' | 'swap' | 'contract_interaction'
-          const formattedTx = {
-            hash: tx.hash,
-            fromAddress: tx.from,
-            toAddress: tx.to,
-            value: tx.value,
-            type: ['transfer', 'mint', 'swap', 'contract_interaction'].includes(tx.type) ? txType : 'transfer',
-            timestamp: tx.timestamp,
-            walletId: address,
-            chain: 'base' as const,
-            blockNumber: tx.blockNumber,
-            gasUsed: tx.gasUsed,
-            gasPrice: tx.gasPrice
-          }
-          
-          addTransaction(formattedTx)
-          setActionResult(`🔥 New ${tx.type} detected: ${tx.value} ETH`)
-          setTimeout(() => setActionResult(null), 5000)
-
-          await sendTransactionNotification(
-            farcasterContext.user?.fid,
-            {
-              hash: tx.hash,
-              type: tx.type,
-              value: tx.value,
-              address
-            }
-          )
-        }
-      }
-
-      realtimeBaseMonitor.addWalletSubscription(address, userId, handleRealtimeTransaction)
+      // Realtime subscriptions are managed centrally in the realtime effect
 
       if (response.ok) {
         console.log(`✅ Started monitoring wallet: ${address}`)
@@ -952,13 +964,11 @@ export default function HomePage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      // Manual refresh
-                      window.location.reload()
-                    }}
+                    onClick={refreshTransactions}
                     className="text-muted-foreground"
+                    disabled={isRefreshing}
                   >
-                    Refresh
+                    {isRefreshing ? 'Refreshing…' : 'Refresh'}
                   </Button>
                 )}
               </div>
