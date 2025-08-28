@@ -812,11 +812,11 @@ export default function HomePage() {
                     addWallet(address, label)
                     e.currentTarget.reset()
                   }
-                }} className="flex gap-2">
+                }} className="flex flex-col sm:flex-row gap-2">
                   <Input
                     name="address"
                     placeholder="Enter wallet address (0x...)"
-                    className="flex-1"
+                    className="flex-1 w-full"
                     required
                     pattern="^0x[a-fA-F0-9]{40}$"
                     title="Please enter a valid Ethereum address starting with 0x"
@@ -824,10 +824,10 @@ export default function HomePage() {
                   <Input
                     name="label"
                     placeholder="Optional name (e.g. My trading wallet)"
-                    className="flex-1 hidden sm:block"
+                    className="flex-1 w-full"
                     maxLength={40}
                   />
-                  <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600">
+                  <Button type="submit" className="bg-gradient-to-r from-blue-600 to-purple-600 w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-1" />
                     Add
                   </Button>
