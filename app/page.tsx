@@ -149,7 +149,7 @@ export default function HomePage() {
               // Add only transactions that occurred after app initialization (avoid old history)
               if (data.transactions && data.transactions.length > 0) {
                 const startedAt = initializedAtRef.current.getTime()
-                data.transactions.forEach((tx: any) => {
+                data.transactions.forEach(async (tx: any) => {
                   const txTime = new Date(tx.timestamp || 0).getTime()
                   if (
                     txTime > startedAt &&
@@ -170,6 +170,17 @@ export default function HomePage() {
                     }
                     addTransaction(formattedTx)
                     console.log('✅ New transaction added:', tx.hash)
+
+                    // Send Farcaster notification
+                    await sendTransactionNotification(
+                      farcasterContext.user?.fid,
+                      {
+                        hash: tx.hash,
+                        type: tx.type || 'transaction',
+                        value: tx.value,
+                        address
+                      }
+                    )
                   }
                 })
               }
@@ -235,27 +246,15 @@ export default function HomePage() {
         setActionResult(`🔥 New ${tx.type} detected: ${tx.value} ETH`)
         setTimeout(() => setActionResult(null), 5000)
         
-        // Send Farcaster notification
-        try {
-          await fetch('/api/webhook', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              type: 'transaction_detected',
-              data: {
-                fid: farcasterContext.user?.fid,
-                transaction: {
-                  hash: tx.hash,
-                  type: tx.type,
-                  value: tx.value,
-                  address: tx.from === watchedWallets.find(w => w.address.toLowerCase() === tx.from.toLowerCase())?.address.toLowerCase() ? tx.from : tx.to
-                }
-              }
-            })
-          })
-        } catch (notifyError) {
-          console.warn('Failed to send Farcaster notification:', notifyError)
-        }
+        await sendTransactionNotification(
+          farcasterContext.user?.fid,
+          {
+            hash: tx.hash,
+            type: tx.type,
+            value: tx.value,
+            address: tx.from === watchedWallets.find(w => w.address.toLowerCase() === tx.from.toLowerCase())?.address.toLowerCase() ? tx.from : tx.to
+          }
+        )
         
         console.log('✅ Real-time transaction added to feed:', tx.hash)
       }
@@ -362,6 +361,25 @@ export default function HomePage() {
     }
   }
 
+  const sendTransactionNotification = async (
+    fid: number | undefined,
+    tx: { hash: string; type: string; value: string; address: string }
+  ) => {
+    if (!fid) return
+    try {
+      await fetch('/api/webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'transaction_detected',
+          data: { fid, transaction: tx }
+        })
+      })
+    } catch (notifyError) {
+      console.warn('Failed to send Farcaster notification:', notifyError)
+    }
+  }
+
   const handleFarcasterAction = async (action: FarcasterAction) => {
     console.log("Received Farcaster action:", action)
     
@@ -455,7 +473,7 @@ export default function HomePage() {
       })
 
       // Start real-time monitoring
-      const handleRealtimeTransaction = (tx: RealtimeTransaction) => {
+      const handleRealtimeTransaction = async (tx: RealtimeTransaction) => {
         console.log('🔥 Real-time transaction for newly added wallet:', tx.hash)
         
         if (!transactions.some(existing => existing.hash === tx.hash)) {
@@ -477,6 +495,16 @@ export default function HomePage() {
           addTransaction(formattedTx)
           setActionResult(`🔥 New ${tx.type} detected: ${tx.value} ETH`)
           setTimeout(() => setActionResult(null), 5000)
+
+          await sendTransactionNotification(
+            farcasterContext.user?.fid,
+            {
+              hash: tx.hash,
+              type: tx.type,
+              value: tx.value,
+              address
+            }
+          )
         }
       }
 
