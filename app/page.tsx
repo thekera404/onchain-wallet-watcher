@@ -309,22 +309,31 @@ export default function HomePage() {
         const { sdk } = await import('@farcaster/miniapp-sdk')
         
         // Get initial context
-        const context = await sdk.context
+        let context = await sdk.context
         setFarcasterContext({
           user: context.user,
           client: { added: context.client.added }
         })
-        
-        // Register for notifications if user is connected
-        if (context.user) {
+
+        // If not connected, attempt Quick Auth to auto-connect
+        if (!context.user) {
+          try {
+            await sdk.quickAuth.getToken()
+            // Refresh context after obtaining token
+            context = await sdk.context
+            if (context.user) {
+              setFarcasterContext({
+                user: context.user,
+                client: { added: context.client.added }
+              })
+              await registerForNotifications(context.user)
+            }
+          } catch (e) {
+            // Non-fatal; user can connect later via UI
+          }
+        } else {
+          // Already connected; ensure notifications are registered
           await registerForNotifications(context.user)
-        }
-        
-        // Ensure Quick Auth session is established for this user (auto-connect)
-        try {
-          await sdk.quickAuth.getToken()
-        } catch (e) {
-          // Non-fatal; user can connect later
         }
 
         // Context listeners may not be available in all SDK versions
