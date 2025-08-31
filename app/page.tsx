@@ -100,7 +100,7 @@ export default function HomePage() {
     // Clear any existing demo wallets on first load
     const demoAddresses = [
       "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-      "0x8ba1f109551bD432803012645Hac136c772c3c2b"
+      "0x8ba1f109551bD432803012645ac136c772c3c2b"
     ]
     
     const hasDemoWallets = watchedWallets.some(wallet => 
@@ -697,14 +697,14 @@ export default function HomePage() {
               {/* Real-time Status Indicator */}
               <div className={`hidden sm:flex items-center gap-2 px-3 py-1 rounded-lg border ${
                 realtimeStatus.connected 
-                  ? 'bg-red-500/10 border-red-500/20' 
+                  ? 'bg-green-500/10 border-green-500/20' 
                   : 'bg-gray-500/10 border-gray-500/20'
               }`}>
                 <div className={`w-2 h-2 rounded-full ${
-                  realtimeStatus.connected ? 'bg-red-500 animate-pulse' : 'bg-gray-500'
+                  realtimeStatus.connected ? 'bg-green-500 animate-pulse' : 'bg-gray-500'
                 }`} />
                 <span className={`text-xs font-medium ${
-                  realtimeStatus.connected ? 'text-red-600' : 'text-gray-600'
+                  realtimeStatus.connected ? 'text-green-600' : 'text-gray-600'
                 }`}>
                   {realtimeStatus.connected ? 'LIVE Base' : 'Offline'}
                 </span>
@@ -948,7 +948,7 @@ export default function HomePage() {
                   variant={realtimeStatus.connected ? "default" : "secondary"} 
                   className={`text-xs ${realtimeStatus.connected ? 'bg-green-500' : 'bg-gray-500'}`}
                 >
-                  {realtimeStatus.connected ? '🔴 LIVE' : '⚫ Offline'}
+                  {realtimeStatus.connected ? '🟢 LIVE' : '⚫ Offline'}
                 </Badge>
                 {transactions.length > 0 && (
                   <Button

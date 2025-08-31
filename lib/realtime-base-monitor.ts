@@ -40,7 +40,16 @@ class RealtimeBaseMonitor {
       
       // Set up event listeners
       this.provider.on('error', this.handleError.bind(this))
-      // Note: 'close' event may not be supported by all WebSocket providers
+      // Attempt to listen to underlying WebSocket close event when available
+      try {
+        const anyProvider: any = this.provider as any
+        const ws = anyProvider?._websocket || anyProvider?._ws || anyProvider?.ws
+        if (ws && typeof ws.on === 'function') {
+          ws.on('close', () => this.handleDisconnect())
+        }
+      } catch {
+        // Silently ignore if underlying WebSocket is not exposed
+      }
       
       // Test connection
       await this.provider.getNetwork()
