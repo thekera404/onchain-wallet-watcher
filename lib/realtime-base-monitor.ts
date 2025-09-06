@@ -28,7 +28,12 @@ class RealtimeBaseMonitor {
   private reconnectDelay = 3000
 
   constructor() {
-    this.initializeProvider()
+    if (typeof window !== 'undefined') {
+      this.initializeProvider()
+    } else {
+      // Avoid attempting WebSocket connections during SSR/build
+      console.log('[RealtimeBaseMonitor] Skipping WebSocket init (SSR/build)')
+    }
   }
 
   private async initializeProvider() {
